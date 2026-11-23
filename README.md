@@ -21,6 +21,13 @@ Recorder purge still independently affects **all** recorded entities.
 
 - Configure **one or more entity labels**; each must have a whole-day
   retention in **1–3650 days**. Add as many distinct label policies as needed.
+- In **Configure → Label retention policies**, review saved label/retention
+  mappings and **edit an existing retention directly**, with the current
+  value prefilled. Add or remove individual labels without re-entering any
+  other policies. The last remaining policy cannot be removed.
+- Actual policy changes explicitly revoke live purge approval and switch to
+  simulation mode; unchanged edits do not revoke an existing approval. A
+  concurrent update to the policy set aborts an edit instead of overwriting it.
 - A daily local-time schedule (default: **06:30**), no purge on startup.
 - Match **direct labels on enabled entity registry entries**, not labels
   inherited from devices or areas.

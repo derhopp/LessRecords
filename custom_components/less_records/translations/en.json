@@ -45,7 +45,7 @@
         "title": "LessRecords options",
         "menu_options": {
           "settings": "Daily schedule and audit logging",
-          "policies": "Replace label retention policies",
+          "policies": "Manage existing label retention policies",
           "activate": "Preview and enable destructive purging",
           "simulate": "Disable purging (simulation only)"
         }
@@ -58,20 +58,11 @@
           "audit_log": "Dedicated rotating audit file"
         }
       },
-      "add_label": {
-        "title": "New label retention policy",
-        "description": "Replace the complete set of label policies. Finishing this operation automatically switches LessRecords to simulation mode and revokes previous destructive approval.",
-        "data": {
-          "label": "Entity label",
-          "keep_days": "Retain detailed states (days)",
-          "add_another": "Add another label"
-        }
-      },
       "policy_warning": {
-        "title": "Confirm replacement of retention policies",
-        "description": "Changing retention policies can delete a different set of records. Applying these new policies will force simulation mode. Review the new scope separately before reactivating live purges.",
+        "title": "Confirm change to retention policy",
+        "description": "**Pending change:** {change}. Saving the change will switch LessRecords to simulation mode and revoke live purge approval. This prevents any unexpected deletion. After checking the simulated scope, explicitly activate live purging again in the options.",
         "data": {
-          "acknowledge": "I understand and want to replace these policies"
+          "acknowledge": "I understand the change and want to apply it"
         }
       },
       "activate": {
@@ -79,6 +70,44 @@
         "description": "**Destructive operation.** Affected entities: **{target_count}**. Retention groups: **{retention_groups}**. Target entity IDs (truncated preview): {targets}. Only detailed Recorder states will be targeted. Recorder's global purge remains independent. Back up the database before proceeding. This approval is valid only while the exact policy and affected entity IDs remain unchanged. Any subsequent scope change blocks live purging until reapproved. Requests are queued by Recorder; successful submission is not confirmation that rows were deleted.",
         "data": {
           "acknowledge": "I have reviewed this scope, verified my backup, and explicitly authorize irreversible deletion"
+        }
+      },
+      "policies": {
+        "title": "Manage label retention policies",
+        "description": "Current label → retention rules: {policies}. Edit a saved value, add a label, or remove one without replacing the other rules.",
+        "menu_options": {
+          "edit_policy": "Edit existing label retention",
+          "add_policy": "Add a label retention policy",
+          "remove_policy": "Remove a label retention policy"
+        }
+      },
+      "edit_policy": {
+        "title": "Choose the policy to edit",
+        "description": "Select an existing label. The dropdown includes its currently saved retention period.",
+        "data": {
+          "label": "Configured label and current retention"
+        }
+      },
+      "edit_retention": {
+        "title": "Edit retention for {label_name}",
+        "description": "Current retention: **{current_days} days**. The stored value is prefilled; change only the number of days. Other labels will not be modified.",
+        "data": {
+          "keep_days": "Keep detailed state history (days)"
+        }
+      },
+      "add_policy": {
+        "title": "Add a label retention policy",
+        "description": "Choose a new label and a retention period (1–3650 whole days). All existing label policies are preserved.",
+        "data": {
+          "label": "New entity label",
+          "keep_days": "Keep detailed state history (days)"
+        }
+      },
+      "remove_policy": {
+        "title": "Remove an existing label policy",
+        "description": "Select the label whose LessRecords policy should be removed. Other policies remain unchanged. At least one label must remain configured.",
+        "data": {
+          "label": "Configured label to remove"
         }
       }
     },
@@ -91,7 +120,10 @@
       "scope_changed": "The entity scope changed during review. Reopen the activation screen to review it again."
     },
     "abort": {
-      "unsafe_recorder": "Cannot safely activate LessRecords: {reason}"
+      "unsafe_recorder": "Cannot safely activate LessRecords: {reason}",
+      "invalid_policies": "The current retention policies are invalid. No changes were saved.",
+      "policies_changed": "The saved policies changed during this operation. Reopen the options and review the latest values.",
+      "last_policy_required": "At least one label retention policy must remain configured. Add another label before removing this one."
     }
   }
 }

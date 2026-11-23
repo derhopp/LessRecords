@@ -45,7 +45,7 @@
         "title": "LessRecords-Optionen",
         "menu_options": {
           "settings": "Tageszeit und Audit-Protokoll",
-          "policies": "Label-Aufbewahrungsregeln ersetzen",
+          "policies": "Bestehende Label-Aufbewahrungsregeln verwalten",
           "activate": "Vorschau und echtes Löschen aktivieren",
           "simulate": "Löschen deaktivieren (nur Simulation)"
         }
@@ -58,20 +58,11 @@
           "audit_log": "Separate rotierende Audit-Datei"
         }
       },
-      "add_label": {
-        "title": "Neue Label-Aufbewahrungsregel",
-        "description": "Ersetze alle bisher definierten Label-Regeln. Mit dem Speichern wechselt LessRecords automatisch in den Simulationsmodus und widerruft die bisherige Löschfreigabe.",
-        "data": {
-          "label": "Entitäten-Label",
-          "keep_days": "Detaillierte Zustände aufbewahren (Tage)",
-          "add_another": "Weiteres Label hinzufügen"
-        }
-      },
       "policy_warning": {
-        "title": "Änderung der Aufbewahrungsregeln bestätigen",
-        "description": "Neue Retention-Regeln können andere Datensätze betreffen. Die Änderungen erzwingen den Simulationsmodus. Prüfe die neuen Ziele, bevor du echte Löschungen erneut aktivierst.",
+        "title": "Änderung der Aufbewahrungsregel bestätigen",
+        "description": "**Geplante Änderung:** {change}. Beim Speichern wird LessRecords in den Simulationsmodus versetzt und die Freigabe für echte Löschungen widerrufen. Dadurch werden unbeabsichtigte Löschungen vermieden. Prüfe anschließend die simulierten Löschziele und aktiviere echte Löschungen ausdrücklich erneut.",
         "data": {
-          "acknowledge": "Ich verstehe die Auswirkungen und möchte die Regeln ersetzen"
+          "acknowledge": "Ich verstehe die Änderung und möchte sie übernehmen"
         }
       },
       "activate": {
@@ -79,6 +70,44 @@
         "description": "**Unumkehrbarer Vorgang.** Betroffene Entitäten: **{target_count}**. Aufbewahrungsgruppen: **{retention_groups}**. Ziel-Entitäts-IDs (gekürzte Vorschau): {targets}. Es werden nur detaillierte Recorder-Zustände angesteuert. Das globale Recorder-Purge läuft unabhängig weiter. Erstelle zuvor ein Datenbank-Backup. Die Freigabe gilt nur, solange Regelwerk und betroffene Entitäts-IDs unverändert bleiben. Änderungen des Umfangs blockieren weitere echte Löschungen. Eine angenommene Recorder-Anforderung bestätigt nicht, dass Datensätze tatsächlich gelöscht wurden.",
         "data": {
           "acknowledge": "Ich habe die Löschziele geprüft, ein Backup kontrolliert und genehmige die unumkehrbare Löschung ausdrücklich"
+        }
+      },
+      "policies": {
+        "title": "Label-Aufbewahrungsregeln verwalten",
+        "description": "Aktuelle Zuordnungen Label → Aufbewahrung: {policies}. Gespeicherten Wert bearbeiten, Label hinzufügen oder einzeln entfernen, ohne die übrigen Regeln neu einzugeben.",
+        "menu_options": {
+          "edit_policy": "Bestehende Label-Aufbewahrung bearbeiten",
+          "add_policy": "Label-Aufbewahrungsregel hinzufügen",
+          "remove_policy": "Label-Aufbewahrungsregel entfernen"
+        }
+      },
+      "edit_policy": {
+        "title": "Regel zum Bearbeiten auswählen",
+        "description": "Wähle ein bereits konfiguriertes Label aus. In der Auswahlliste wird die aktuell gespeicherte Aufbewahrungszeit angezeigt.",
+        "data": {
+          "label": "Konfiguriertes Label und aktuelle Aufbewahrung"
+        }
+      },
+      "edit_retention": {
+        "title": "Aufbewahrung für {label_name} bearbeiten",
+        "description": "Bisherige Aufbewahrung: **{current_days} Tage**. Der gespeicherte Wert ist bereits eingetragen; ändere nur die Anzahl der Tage. Alle übrigen Labels bleiben unverändert.",
+        "data": {
+          "keep_days": "Detaillierte Zustände aufbewahren (Tage)"
+        }
+      },
+      "add_policy": {
+        "title": "Label-Aufbewahrungsregel hinzufügen",
+        "description": "Wähle ein neues Label und eine Aufbewahrungszeit (1–3650 ganze Tage). Die bestehenden Label-Regeln bleiben unverändert.",
+        "data": {
+          "label": "Neues Entitäten-Label",
+          "keep_days": "Detaillierte Zustände aufbewahren (Tage)"
+        }
+      },
+      "remove_policy": {
+        "title": "Vorhandene Label-Regel entfernen",
+        "description": "Wähle die LessRecords-Regel aus, die entfernt werden soll. Die übrigen Regeln bleiben unverändert. Mindestens ein Label muss konfiguriert bleiben.",
+        "data": {
+          "label": "Zu entfernendes konfiguriertes Label"
         }
       }
     },
@@ -91,7 +120,10 @@
       "scope_changed": "Der Löschumfang hat sich während der Prüfung geändert. Öffne die Aktivierung erneut und überprüfe die Änderungen."
     },
     "abort": {
-      "unsafe_recorder": "LessRecords kann nicht sicher aktiviert werden: {reason}"
+      "unsafe_recorder": "LessRecords kann nicht sicher aktiviert werden: {reason}",
+      "invalid_policies": "Die vorhandenen Aufbewahrungsregeln sind ungültig. Es wurden keine Änderungen gespeichert.",
+      "policies_changed": "Die gespeicherten Regeln haben sich während der Bearbeitung geändert. Öffne die Optionen erneut und prüfe die aktuellen Werte.",
+      "last_policy_required": "Mindestens ein Label muss konfiguriert bleiben. Füge ein weiteres Label hinzu, bevor du dieses entfernst."
     }
   }
 }

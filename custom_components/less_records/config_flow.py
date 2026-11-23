@@ -155,7 +155,10 @@ class LessRecordsOptionsFlow(config_entries.OptionsFlow):
 
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         self._entry = config_entry
-        self._new_policies: dict[str, int] = {}
+        self._source_policies: dict[str, int] | None = None
+        self._selected_label: str | None = None
+        self._pending_policies: dict[str, int] | None = None
+        self._pending_change = ""
         self._review_fingerprint: str | None = None
 
     def _save(self, changes: dict[str, Any]):
@@ -202,54 +205,231 @@ class LessRecordsOptionsFlow(config_entries.OptionsFlow):
             errors=errors,
         )
 
-    async def async_step_policies(self, user_input: dict | None = None):
-        """Replace all retention policies; force dry-run until reapproved."""
-        self._new_policies = {}
-        return await self.async_step_add_label()
+    def _policy_snapshot(self) -> dict[str, int]:
+        """Read a safe copy of saved policies without mutating the config entry."""
+        return validate_policies(get_settings(self._entry)[CONF_POLICIES])
 
-    async def async_step_add_label(self, user_input: dict | None = None):
-        """Collect one replacement label policy at a time."""
+    def _source(self) -> dict[str, int]:
+        """Retain the starting snapshot throughout a single edit operation."""
+        if self._source_policies is None:
+            self._source_policies = self._policy_snapshot()
+        return self._source_policies
+
+    def _label_name(self, label_id: str) -> str:
+        """Display the friendly label name, preserving stable internal IDs."""
+        entry = lr.async_get(self.hass).labels.get(label_id)
+        return entry.name if entry is not None else label_id
+
+    def _policy_choices(self) -> list[selector.SelectOptionDict]:
+        """Show existing label names together with the saved retention."""
+        return [
+            selector.SelectOptionDict(
+                value=label_id,
+                label=f"{self._label_name(label_id)} — {days} d",
+            )
+            for label_id, days in sorted(
+                self._source().items(),
+                key=lambda item: self._label_name(item[0]).casefold(),
+            )
+        ]
+
+    def _select_existing_schema(self) -> vol.Schema:
+        """Choose an already configured label, not a new label."""
+        return vol.Schema(
+            {
+                vol.Required(CONF_LABEL): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=self._policy_choices(),
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
+                )
+            }
+        )
+
+    async def async_step_policies(self, user_input: dict | None = None):
+        """Display the existing policies and independent edit/add/remove paths."""
+        try:
+            self._source_policies = self._policy_snapshot()
+        except (KeyError, PolicyError, TypeError):
+            return self.async_abort(reason="invalid_policies")
+        self._selected_label = None
+        self._pending_policies = None
+        self._pending_change = ""
+
+        preview = "; ".join(
+            f"{self._label_name(label_id)}: {days} d"
+            for label_id, days in sorted(
+                self._source().items(),
+                key=lambda item: self._label_name(item[0]).casefold(),
+            )
+        )
+        return self.async_show_menu(
+            step_id="policies",
+            menu_options=["edit_policy", "add_policy", "remove_policy"],
+            description_placeholders={"policies": preview},
+        )
+
+    async def async_step_edit_policy(self, user_input: dict | None = None):
+        """Choose a persisted label-retention pair for editing."""
         errors = {}
         if user_input is not None:
-            label_id = user_input[CONF_LABEL]
+            label_id = user_input.get(CONF_LABEL)
+            if not isinstance(label_id, str) or label_id not in self._source():
+                errors[CONF_LABEL] = "unknown_label"
+            else:
+                self._selected_label = label_id
+                return await self.async_step_edit_retention()
+        return self.async_show_form(
+            step_id="edit_policy",
+            data_schema=self._select_existing_schema(),
+            errors=errors,
+        )
+
+    async def async_step_edit_retention(self, user_input: dict | None = None):
+        """Prefill the saved number of days, then change only that one policy."""
+        label_id = self._selected_label
+        if label_id is None or label_id not in self._source():
+            return self.async_abort(reason="invalid_policies")
+        days = self._source()[label_id]
+        errors = {}
+        if user_input is not None:
+            try:
+                updated_days = _parse_retention(user_input[CONF_KEEP_DAYS])
+            except (KeyError, PolicyError, TypeError, ValueError):
+                errors[CONF_KEEP_DAYS] = "invalid_retention"
+            else:
+                if updated_days == days:
+                    # A no-op must not silently disable a previously approved policy.
+                    if self._policy_snapshot() != self._source():
+                        return self.async_abort(reason="policies_changed")
+                    return self._save({})
+                pending = dict(self._source())
+                pending[label_id] = updated_days
+                self._pending_policies = pending
+                self._pending_change = (
+                    f"{self._label_name(label_id)}: {days} d → {updated_days} d"
+                )
+                return await self.async_step_policy_warning()
+        return self.async_show_form(
+            step_id="edit_retention",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_KEEP_DAYS, default=days): selector.NumberSelector(
+                        selector.NumberSelectorConfig(
+                            min=1,
+                            max=MAX_KEEP_DAYS,
+                            step=1,
+                            mode=selector.NumberSelectorMode.BOX,
+                        )
+                    )
+                }
+            ),
+            errors=errors,
+            description_placeholders={
+                "label_name": self._label_name(label_id),
+                "current_days": str(days),
+            },
+        )
+
+    async def async_step_add_policy(self, user_input: dict | None = None):
+        """Append a new label without re-entering existing retention values."""
+        errors = {}
+        if user_input is not None:
+            label_id = user_input.get(CONF_LABEL)
             try:
                 days = _parse_retention(user_input[CONF_KEEP_DAYS])
-                if label_id not in lr.async_get(self.hass).labels:
-                    errors["base"] = "unknown_label"
-                elif label_id in self._new_policies:
+            except (KeyError, PolicyError, TypeError, ValueError):
+                errors[CONF_KEEP_DAYS] = "invalid_retention"
+            else:
+                if not isinstance(label_id, str) or (
+                    label_id not in lr.async_get(self.hass).labels
+                ):
+                    errors[CONF_LABEL] = "unknown_label"
+                elif label_id in self._source():
                     errors[CONF_LABEL] = "duplicate_label"
                 else:
-                    self._new_policies[label_id] = days
-                    if user_input[CONF_ADD_ANOTHER]:
-                        return await self.async_step_add_label()
+                    pending = dict(self._source())
+                    pending[label_id] = days
+                    self._pending_policies = pending
+                    self._pending_change = (
+                        f"{self._label_name(label_id)}: +{days} d"
+                    )
                     return await self.async_step_policy_warning()
-            except (KeyError, PolicyError, TypeError, ValueError):
-                errors["base"] = "invalid_retention"
         return self.async_show_form(
-            step_id="add_label", data_schema=_LABEL_SCHEMA, errors=errors
+            step_id="add_policy",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_LABEL): selector.LabelSelector(
+                        selector.LabelSelectorConfig(multiple=False)
+                    ),
+                    vol.Required(CONF_KEEP_DAYS, default=30): selector.NumberSelector(
+                        selector.NumberSelectorConfig(
+                            min=1,
+                            max=MAX_KEEP_DAYS,
+                            step=1,
+                            mode=selector.NumberSelectorMode.BOX,
+                        )
+                    ),
+                }
+            ),
+            errors=errors,
+        )
+
+    async def async_step_remove_policy(self, user_input: dict | None = None):
+        """Remove one existing policy; the final policy is not removable."""
+        if len(self._source()) <= 1:
+            return self.async_abort(reason="last_policy_required")
+        errors = {}
+        if user_input is not None:
+            label_id = user_input.get(CONF_LABEL)
+            if not isinstance(label_id, str) or label_id not in self._source():
+                errors[CONF_LABEL] = "unknown_label"
+            else:
+                pending = dict(self._source())
+                days = pending.pop(label_id)
+                self._pending_policies = pending
+                self._pending_change = f"{self._label_name(label_id)}: −{days} d"
+                return await self.async_step_policy_warning()
+        return self.async_show_form(
+            step_id="remove_policy",
+            data_schema=self._select_existing_schema(),
+            errors=errors,
         )
 
     async def async_step_policy_warning(self, user_input: dict | None = None):
-        """Confirm policy replacement and revoke any live approval."""
+        """Apply a targeted edit only after acknowledgement and stale-data checks."""
+        pending = self._pending_policies
+        if pending is None:
+            return self.async_abort(reason="invalid_policies")
+        try:
+            validate_policies(pending)
+            if self._policy_snapshot() != self._source():
+                return self.async_abort(reason="policies_changed")
+            added_labels = set(pending) - set(self._source())
+            if added_labels - set(lr.async_get(self.hass).labels):
+                return self.async_abort(reason="policies_changed")
+        except (KeyError, PolicyError, TypeError):
+            return self.async_abort(reason="policies_changed")
+
         errors = {}
         if user_input is not None:
-            if not user_input.get(CONF_ACKNOWLEDGE, False):
+            if user_input.get(CONF_ACKNOWLEDGE) is not True:
                 errors["base"] = "acknowledgement_required"
             else:
-                try:
-                    validate_policies(self._new_policies)
-                except PolicyError:
-                    errors["base"] = "invalid_retention"
-                else:
-                    return self._save(
-                        {
-                            CONF_POLICIES: self._new_policies,
-                            CONF_DRY_RUN: True,
-                            CONF_APPROVED_FINGERPRINT: "",
-                        }
-                    )
+                # Any actual modification revokes destructive approval.
+                # The user must review the effective entity scope again.
+                return self._save(
+                    {
+                        CONF_POLICIES: dict(pending),
+                        CONF_DRY_RUN: True,
+                        CONF_APPROVED_FINGERPRINT: "",
+                    }
+                )
         return self.async_show_form(
-            step_id="policy_warning", data_schema=_ACK_SCHEMA, errors=errors
+            step_id="policy_warning",
+            data_schema=_ACK_SCHEMA,
+            errors=errors,
+            description_placeholders={"change": self._pending_change},
         )
 
     async def async_step_simulate(self, user_input: dict | None = None):

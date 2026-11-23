@@ -34,6 +34,13 @@ Every destructive-feature change must be validated before production use.
 | Recorder not ready / migrating | Fail closed |
 | More than 1500 entities | Fail closed |
 | Invalid local time | Configuration rejected |
+| Edit an existing retention | Saved days prefilled, only selected policy changed |
+| Add a label retention policy | Preserve existing configured mappings |
+| Remove one label retention policy | Preserve all other mappings |
+| Attempt to remove final policy | Reject; at least one policy remains |
+| Concurrent policy edit | Reject stale update without overwriting newer settings |
+| Policy change versus no-op | Changed policy resets to simulation/revokes approval; no-op retains existing approval |
+| Policy change without explicit confirmation | Reject and preserve persisted settings |
 
 ## Required before production approval
 
