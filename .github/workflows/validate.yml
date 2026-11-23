@@ -1,0 +1,51 @@
+name: Validate LessRecords
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: Functional and safety tests (Home Assistant 2026.11)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+      - name: Install test dependencies
+        run: python -m pip install -r requirements-test.txt
+      - name: Lint
+        run: ruff check custom_components tests
+      - name: Compile all integration Python modules
+        run: python -m compileall -q custom_components tests
+      - name: Validate translation and manifest JSON
+        run: |
+          python -m json.tool custom_components/less_records/manifest.json >/dev/null
+          python -m json.tool custom_components/less_records/translations/en.json >/dev/null
+          python -m json.tool custom_components/less_records/translations/de.json >/dev/null
+          python -m json.tool hacs.json >/dev/null
+      - name: Functional and destructive-safety regression tests
+        run: python -m pytest -q
+
+  hassfest:
+    name: Home Assistant hassfest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: home-assistant/actions/hassfest@master
+
+  hacs:
+    name: HACS / Marketplace validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hacs/action@main
+        with:
+          category: integration
+# Intentionally NO tag, publish, package or GitHub Release workflow.

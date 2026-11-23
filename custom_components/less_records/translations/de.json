@@ -1,0 +1,97 @@
+{
+  "title": "LessRecords",
+  "config": {
+    "flow_title": "LessRecords einrichten",
+    "step": {
+      "user": {
+        "title": "Zeitplan und Protokollierung",
+        "description": "LessRecords startet immer im Simulationsmodus und löscht bei der Einrichtung keine Daten. Wähle eine tägliche Uhrzeit außerhalb der nächtlichen Recorder-Wartung (ungefähr 04:12 Uhr). Lass das globale auto_purge aktiviert und setze purge_keep_days mindestens auf die längste Label-Aufbewahrungszeit.",
+        "data": {
+          "run_time": "Tägliche Purge-Uhrzeit (lokale HA-Zeit)",
+          "audit_log": "Separates rotierendes Audit-Log schreiben (empfohlen)"
+        }
+      },
+      "label": {
+        "title": "Aufbewahrungsregel für Label hinzufügen",
+        "description": "Wähle ein direkt an Entitäten zugewiesenes Label und eine Aufbewahrungszeit in ganzen Tagen (1–3650). Du kannst beliebig viele weitere Labels hinzufügen. Bei mehreren passenden Labels gilt immer die längste Aufbewahrungszeit.",
+        "data": {
+          "label": "Entitäten-Label",
+          "keep_days": "Detaillierte Zustände aufbewahren (Tage)",
+          "add_another": "Weiteres Label hinzufügen"
+        }
+      },
+      "warning": {
+        "title": "Warnungen zu Datenverlust und Recorder",
+        "description": "**Wichtig:** Das Löschen von Recorder-Daten ist unumkehrbar. Erstelle zuvor ein geprüftes Backup. Das globale Auto-Purge von Home Assistant gilt unabhängig weiter – auch für Entitäten ohne LessRecords-Label. Langzeitstatistiken gehören nicht zum Umfang von LessRecords. Weder eine Simulation noch ein Recorder-Purge garantieren eine sofortige Verkleinerung der Datenbankdatei. Die erste Einrichtung startet immer im Simulationsmodus. Für echte Löschungen sind eine erneute Vorschau und ausdrückliche Aktivierung in den Optionen erforderlich.",
+        "data": {
+          "acknowledge": "Ich habe die Warnungen gelesen und verstanden"
+        }
+      }
+    },
+    "error": {
+      "invalid_time": "Bitte eine gültige lokale Uhrzeit eingeben.",
+      "invalid_retention": "Die Aufbewahrung muss eine ganze Zahl von 1 bis 3650 Tagen sein.",
+      "duplicate_label": "Für dieses Label existiert bereits eine Regel.",
+      "unknown_label": "Das ausgewählte Label existiert nicht.",
+      "acknowledgement_required": "Die Warnungen müssen ausdrücklich bestätigt werden."
+    },
+    "abort": {
+      "single_instance_allowed": "Es wird nur eine LessRecords-Konfiguration unterstützt."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "LessRecords-Optionen",
+        "menu_options": {
+          "settings": "Tageszeit und Audit-Protokoll",
+          "policies": "Label-Aufbewahrungsregeln ersetzen",
+          "activate": "Vorschau und echtes Löschen aktivieren",
+          "simulate": "Löschen deaktivieren (nur Simulation)"
+        }
+      },
+      "settings": {
+        "title": "Tageszeit und Audit-Protokoll",
+        "description": "Änderungen von Uhrzeit oder Logging umgehen die bisher freigegebenen Löschziele nicht. Ohne Datei-Protokollierung werden nur die normalen Home-Assistant-Logs verwendet.",
+        "data": {
+          "run_time": "Tägliche Purge-Uhrzeit",
+          "audit_log": "Separate rotierende Audit-Datei"
+        }
+      },
+      "add_label": {
+        "title": "Neue Label-Aufbewahrungsregel",
+        "description": "Ersetze alle bisher definierten Label-Regeln. Mit dem Speichern wechselt LessRecords automatisch in den Simulationsmodus und widerruft die bisherige Löschfreigabe.",
+        "data": {
+          "label": "Entitäten-Label",
+          "keep_days": "Detaillierte Zustände aufbewahren (Tage)",
+          "add_another": "Weiteres Label hinzufügen"
+        }
+      },
+      "policy_warning": {
+        "title": "Änderung der Aufbewahrungsregeln bestätigen",
+        "description": "Neue Retention-Regeln können andere Datensätze betreffen. Die Änderungen erzwingen den Simulationsmodus. Prüfe die neuen Ziele, bevor du echte Löschungen erneut aktivierst.",
+        "data": {
+          "acknowledge": "Ich verstehe die Auswirkungen und möchte die Regeln ersetzen"
+        }
+      },
+      "activate": {
+        "title": "Löschumfang prüfen und echtes Löschen aktivieren",
+        "description": "**Unumkehrbarer Vorgang.** Betroffene Entitäten: **{target_count}**. Aufbewahrungsgruppen: **{retention_groups}**. Ziel-Entitäts-IDs (gekürzte Vorschau): {targets}. Es werden nur detaillierte Recorder-Zustände angesteuert. Das globale Recorder-Purge läuft unabhängig weiter. Erstelle zuvor ein Datenbank-Backup. Die Freigabe gilt nur, solange Regelwerk und betroffene Entitäts-IDs unverändert bleiben. Änderungen des Umfangs blockieren weitere echte Löschungen. Eine angenommene Recorder-Anforderung bestätigt nicht, dass Datensätze tatsächlich gelöscht wurden.",
+        "data": {
+          "acknowledge": "Ich habe die Löschziele geprüft, ein Backup kontrolliert und genehmige die unumkehrbare Löschung ausdrücklich"
+        }
+      }
+    },
+    "error": {
+      "invalid_time": "Bitte eine gültige lokale Uhrzeit eingeben.",
+      "invalid_retention": "Bitte eine ganze Zahl von 1 bis 3650 Tagen wählen.",
+      "duplicate_label": "Dieses Label ist bereits konfiguriert.",
+      "unknown_label": "Das ausgewählte Label existiert nicht.",
+      "acknowledgement_required": "Eine ausdrückliche Bestätigung ist erforderlich.",
+      "scope_changed": "Der Löschumfang hat sich während der Prüfung geändert. Öffne die Aktivierung erneut und überprüfe die Änderungen."
+    },
+    "abort": {
+      "unsafe_recorder": "LessRecords kann nicht sicher aktiviert werden: {reason}"
+    }
+  }
+}

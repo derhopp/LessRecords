@@ -1,0 +1,17 @@
+{
+  "domain": "less_records",
+  "name": "LessRecords",
+  "version": "0.1.0-dev",
+  "documentation": "https://github.com/derhopp/LessRecords",
+  "issue_tracker": "https://github.com/derhopp/LessRecords/issues",
+  "codeowners": [
+    "@derhopp"
+  ],
+  "dependencies": [
+    "recorder"
+  ],
+  "config_flow": true,
+  "integration_type": "service",
+  "iot_class": "calculated",
+  "requirements": []
+}

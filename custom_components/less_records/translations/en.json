@@ -1,0 +1,97 @@
+{
+  "title": "LessRecords",
+  "config": {
+    "flow_title": "Configure LessRecords",
+    "step": {
+      "user": {
+        "title": "Schedule and audit log",
+        "description": "LessRecords starts in simulation mode and never deletes data during setup. Choose a daily local time away from Recorder's nightly maintenance (around 04:12). Keep Recorder auto_purge enabled and set its purge_keep_days to at least your longest label retention.",
+        "data": {
+          "run_time": "Daily purge time (Home Assistant local time)",
+          "audit_log": "Write to a dedicated rotating audit log (recommended)"
+        }
+      },
+      "label": {
+        "title": "Add a label retention policy",
+        "description": "Select a label applied directly to entities and a retention period in whole days (1–3650). Add further labels as needed. If several labels match, the longest retention wins.",
+        "data": {
+          "label": "Entity label",
+          "keep_days": "Retain detailed states (days)",
+          "add_another": "Add another label"
+        }
+      },
+      "warning": {
+        "title": "Review data-loss and Recorder warnings",
+        "description": "**Important:** Recorder purging is irreversible. Make a verified backup first. Home Assistant's independent global purge still affects all entities, including those without LessRecords labels. Long-term statistics are outside LessRecords scope. Neither simulation nor the Recorder purge action guarantees immediate disk space recovery. The initial installation always runs in simulation mode; destructive purging requires a second preview and explicit activation in integration options.",
+        "data": {
+          "acknowledge": "I have read and understood these warnings"
+        }
+      }
+    },
+    "error": {
+      "invalid_time": "Enter a valid local time.",
+      "invalid_retention": "Retention must be a whole number of days between 1 and 3650.",
+      "duplicate_label": "This label already has a retention policy.",
+      "unknown_label": "The selected label does not exist.",
+      "acknowledgement_required": "You must explicitly acknowledge the warnings."
+    },
+    "abort": {
+      "single_instance_allowed": "Only one LessRecords configuration is supported."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "LessRecords options",
+        "menu_options": {
+          "settings": "Daily schedule and audit logging",
+          "policies": "Replace label retention policies",
+          "activate": "Preview and enable destructive purging",
+          "simulate": "Disable purging (simulation only)"
+        }
+      },
+      "settings": {
+        "title": "Daily schedule and audit logging",
+        "description": "Changes to the schedule or logging do not bypass the existing approved entity scope. Disabling the file log means only Home Assistant's standard logging is used.",
+        "data": {
+          "run_time": "Daily purge time",
+          "audit_log": "Dedicated rotating audit file"
+        }
+      },
+      "add_label": {
+        "title": "New label retention policy",
+        "description": "Replace the complete set of label policies. Finishing this operation automatically switches LessRecords to simulation mode and revokes previous destructive approval.",
+        "data": {
+          "label": "Entity label",
+          "keep_days": "Retain detailed states (days)",
+          "add_another": "Add another label"
+        }
+      },
+      "policy_warning": {
+        "title": "Confirm replacement of retention policies",
+        "description": "Changing retention policies can delete a different set of records. Applying these new policies will force simulation mode. Review the new scope separately before reactivating live purges.",
+        "data": {
+          "acknowledge": "I understand and want to replace these policies"
+        }
+      },
+      "activate": {
+        "title": "Preview scope and activate irreversible purge requests",
+        "description": "**Destructive operation.** Affected entities: **{target_count}**. Retention groups: **{retention_groups}**. Target entity IDs (truncated preview): {targets}. Only detailed Recorder states will be targeted. Recorder's global purge remains independent. Back up the database before proceeding. This approval is valid only while the exact policy and affected entity IDs remain unchanged. Any subsequent scope change blocks live purging until reapproved. Requests are queued by Recorder; successful submission is not confirmation that rows were deleted.",
+        "data": {
+          "acknowledge": "I have reviewed this scope, verified my backup, and explicitly authorize irreversible deletion"
+        }
+      }
+    },
+    "error": {
+      "invalid_time": "Enter a valid local time.",
+      "invalid_retention": "Retention must be between 1 and 3650 whole days.",
+      "duplicate_label": "This label is already configured.",
+      "unknown_label": "The selected label does not exist.",
+      "acknowledgement_required": "Explicit acknowledgement is required.",
+      "scope_changed": "The entity scope changed during review. Reopen the activation screen to review it again."
+    },
+    "abort": {
+      "unsafe_recorder": "Cannot safely activate LessRecords: {reason}"
+    }
+  }
+}

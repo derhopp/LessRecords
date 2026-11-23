@@ -1,51 +1,55 @@
-# LessRecords — Mandatory Validation and Test Plan (Draft)
+# Mandatory Test and Release Gates
 
-No functional implementation is complete until these checks are implemented, executed and green. This document is a **plan**, not evidence of executed tests.
+**Status:** automated unit/safety tests and validation workflows exist on
+\`main\`. These files do not by themselves establish that CI has passed.
+Every destructive-feature change must be validated before production use.
 
-## Automated gates on pushes to main
+## Automated on push to main
 
-1. Ruff (lint/format), import checking, JSON/YAML syntax checks and supported Python versions.
-2. pytest + `pytest-homeassistant-custom-component` with isolated Home Assistant fixtures.
-3. Home Assistant **hassfest** for manifest, translation and integration correctness.
-4. `hacs/action` with `category: integration` for HACS/Marketplace repository compliance.
-5. Current Home Assistant Marketplace package requirements: root `hacs.json`, root README, exactly one `custom_components/less_records` package, accepted manifest and locale files, description, topics, Issues enabled, and brand artwork.
-6. Dependency and code security scanning; version compatibility tests for the chosen minimum HA release and latest stable/beta where feasible.
-7. Explicit approval required for release publishing: the CI workflow must never create releases or tags automatically.
+- **Python 3.14 / Home Assistant 2026.11:** pytest regression suite.
+- **Ruff:** static linting.
+- **Compilation/JSON:** Python and translations/manifest/HACS JSON syntax.
+- **hassfest:** custom integration metadata and translations.
+- **HACS action:** Marketplace/HACS repository validation with
+  \`category: integration\`.
+- No automated tags, GitHub Releases or package publication.
 
-Do not enable these build gates until the corresponding installable code and metadata exist: otherwise a red validator on a documentation-only repository is misleading. Once implementation begins, **every** changed production file must be covered by the gates.
+## Regression test matrix
 
-## Functional tests
-
-| Case | Expected outcome |
+| Case | Expected |
 | --- | --- |
-| No labels, missing retention, bad date/time | Configuration rejected; no purge task |
-| One label, one entity | Only its explicit entity ID is targeted |
-| Multiple labels on one entity | Highest retention wins |
-| Different labels with distinct retention | Correct separate entity groups; no duplicates |
-| Unmatched/unlabeled entities | Never included in LessRecords requests |
-| Deleted/renamed labels or missing registry rows | Skip and report; never widen scope |
-| Label assignments change after preview | Re-confirm expanded scope before live purge |
-| Dry-run mode | Absolutely no destructive service or database mutation |
-| First activation and dangerous reconfiguration | Clear warning plus explicit approval |
-| Scheduler near DST change, restart, missed time | Exactly policy-approved behavior, no surprise replay |
-| Two runs overlap / Recorder unavailable | Skip or serialize safely; never bypass Recorder |
-| Log path unwritable with audit enabled | Fail closed, no deletion |
-| Audit disabled by owner | Document remaining Home Assistant error logging |
-| Recorder queue failure | Report *request failure*, not successful deletion |
-| Successful queue submission | Report *submitted*, not verified rows deleted |
-| Built-in Recorder purge and repack | No overlapping direct DB writes or invalid retention promises |
-| Simulated boundary state | No fabricated state; feature disabled unless separately proven safe |
-| Very large label sets | Bounded workload, no uncontrolled service fanout |
-| Regression tests for statistics and history | Preserve untouched data and Recorder invariants |
+| No labels, invalid retention, fractional or bool days | Configuration rejected |
+| Missing configured label or malformed entity | Entire purge run blocked |
+| Direct label vs. unmatched/unlabeled | Only matching entity targeted |
+| Multiple matching labels | Longest retention, exactly one target ID |
+| Disabled entities | Excluded from LessRecords |
+| Configuration or entity membership changes | Approval fingerprint changes |
+| Simulation | Audit only, zero destructive service calls |
+| Live without approval | Zero destructive service calls |
+| Live with approval | Only recorder.purge_entities and explicit IDs |
+| Audit write failure | No destructive service calls |
+| Recorder submission failure | request_failed; never deletion success |
+| Recorder backend not SQLite | Fail closed |
+| Global auto_purge disabled / global purge retention too short | Fail closed |
+| Recorder not ready / migrating | Fail closed |
+| More than 1500 entities | Fail closed |
+| Invalid local time | Configuration rejected |
 
-## Database/integration tests
+## Required before production approval
 
-- Use **throwaway** Recorder databases with known state rows before, at and after the cutoff. Never run destructive tests on a production database.
-- Verify actual retained state rows, including across entity ID renames, unchanged/sparse entities and re-created entities, wherever supported by the selected HA version.
-- Test SQLite and additional selected SQL backends (MariaDB/PostgreSQL) with integration environments before declaring compatibility.
-- Include performance and storage-size tests, but distinguish row deletion from disk compaction/repacking.
-- Confirm that long-term statistics are not unexpectedly affected.
+- **Disposable SQLite Recorder integration database** seeded with precise
+  timestamps and known states: test actual row retention after the Home
+  Assistant Recorder purge queue drains, confirm unaffected entities remain.
+- Validate newly labeled entities, relabeling after approval, entity renames,
+  sparse histories, unknown/unavailable states and overlapping maintenance.
+- Verify options flow, both locale translations, scheduling and restart/DST
+  behavior in a real Home Assistant 2026.11 test instance.
+- Confirm Marketplace/HACS custom repository installation from \`main\`,
+  brand artwork, manifest and minimum HA version.
+- Verify the rotating JSON audit and failure handling with a real filesystem.
+- Review runtime, database size and repack behavior; distinguish queued
+  requests from completed deletion.
+- Record passing CI run and verify a restorable backup before allowing
+  production activation.
 
-## Release gate
-
-An explicit owner command is mandatory, followed by a passing test suite, a recorded snapshot of the validated versions, backup and upgrade instructions, and reviewed release notes. No tag, GitHub Release, package publication, or auto-release before approval.
+Release only when the owner explicitly requests it and all gates pass.
