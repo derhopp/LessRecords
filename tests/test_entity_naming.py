@@ -32,7 +32,11 @@ def create_entity(key: str = "matching_devices") -> LabelPolicyEntity:
 
 def test_label_entity_has_descriptive_name_instead_of_none():
     entity = create_entity()
-    assert entity.name == "Matching devices"
+    # HA resolves localized names only after entity platform setup.
+    # At construction, verify that the previous suppressing _attr_name=None
+    # is gone and fallback/translation metadata are present.
+    assert not hasattr(entity, "_attr_name")
+    assert entity.entity_description.name == "Matching devices"
     assert entity.translation_key == "matching_devices"
     assert entity.entity_description.has_entity_name is True
 
