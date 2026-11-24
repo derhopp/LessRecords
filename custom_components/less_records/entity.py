@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from homeassistant.core import callback
-from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.entity import DeviceInfo, Entity
 from homeassistant.helpers import label_registry as lr
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from homeassistant.helpers.entity import DeviceInfo, Entity, EntityDescription
+from homeassistant.util import slugify
 
 from .const import DOMAIN
 from .manager import get_settings
@@ -39,12 +40,29 @@ class LabelPolicyEntity(Entity):
         self.manager = manager
         self.entry = manager.entry
         self.label_id = label_id
-        self._attr_name = None
+        # Explicitly setting _attr_name=None suppresses the translation
+        # and causes HA to show ONLY the device/label name. Use the standard
+        # translation key with an English fallback instead.
+        self.entity_description = EntityDescription(
+            key=key, name=name, translation_key=key, has_entity_name=True
+        )
         self._attr_translation_key = key
+        self._suggested_policy_object_id = (
+            f"less_records_{slugify(label_id)}_{slugify(key)}"
+        )
         self._attr_unique_id = (
             f"{self.entry.entry_id}_{stable_id(get_settings(self.entry), label_id)}_{key}"
         )
         self._attr_device_info = device_info_for(manager.hass, self.entry, label_id)
+
+    @property
+    def suggested_object_id(self) -> str:
+        """A deterministic and descriptive ID for newly registered entities.
+
+        The unique_id remains unchanged; existing registry IDs are handled
+        separately by the conservative migration.
+        """
+        return self._suggested_policy_object_id
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()

@@ -48,4 +48,33 @@ jobs:
       - uses: hacs/action@main
         with:
           category: integration
-# Intentionally NO tag, publish, package or GitHub Release workflow.
+  prerelease_0_1_0b1:
+    name: Publish explicitly requested 0.1.0b1 pre-release
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [tests, hassfest, hacs]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: less-records-prerelease-0-1-0b1
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Publish pre-release once, only after all validation gates
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if gh release view 0.1.0b1 >/dev/null 2>&1; then
+            echo "Pre-release 0.1.0b1 already exists; no action."
+            exit 0
+          fi
+          gh release create 0.1.0b1 \
+            --target "$GITHUB_SHA" \
+            --title "LessRecords 0.1.0b1" \
+            --notes-file docs/RELEASE_0.1.0b1.md \
+            --prerelease
+

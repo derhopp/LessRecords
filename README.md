@@ -49,6 +49,23 @@ A label remains simulated unless explicitly opted into live execution.
 that entity is never purged by LessRecords.** Otherwise the longest retention
 wins. A changed entity scope blocks live operations until reapproved.
 
+
+## Descriptive, stable entity names and IDs
+
+Each policy device retains the Home Assistant label name, but its controls and
+sensors use translated, descriptive function names. For example, the label
+`sparse` has **Sparse Retention days**, **Sparse Matching devices**,
+**Sparse Simulation mode** and **Sparse Last run**. New entities suggest
+stable IDs such as `number.less_records_sparse_retention_days` and
+`sensor.less_records_sparse_last_run`, instead of multiple identical
+`sensor.sparse` names. Other entity domains and keys follow the same pattern.
+
+On upgrade, a conservative one-time registry migration updates legacy
+automatically generated label-only entity IDs while preserving their unique
+IDs. User-customized names and IDs remain unchanged. Entity ID collisions are
+handled by Home Assistant's registry. As with any entity ID rename, review
+automations and dashboards that explicitly reference the previous ID.
+
 ## Recorder prerequisites and scope
 
 - Home Assistant **2026.11 or newer**, **SQLite Recorder only** for v1.

@@ -17,6 +17,7 @@ from .const import (
     PLATFORMS,
 )
 from .manager import LessRecordsManager, get_settings, normalize_run_time
+from .migration import async_migrate_legacy_entity_ids
 from .policy import PolicyError, validate_policies
 
 _LOGGER = logging.getLogger(__name__)
@@ -47,6 +48,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             CONF_APPROVED_FINGERPRINT: "",
         }
         hass.config_entries.async_update_entry(entry, options=settings)
+
+    # Existing HA entity IDs remain in the entity registry across upgrades.
+    # Rename only uncustomized label-only IDs before platforms are loaded.
+    # Custom user names/IDs and integration unique IDs are never changed.
+    async_migrate_legacy_entity_ids(hass, entry)
 
     manager = LessRecordsManager(hass, entry)
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = manager
