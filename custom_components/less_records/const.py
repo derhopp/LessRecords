@@ -17,3 +17,15 @@ BATCH_SIZE = 50
 AUDIT_FILENAME = "less_records_audit.log"
 AUDIT_MAX_BYTES = 5 * 1024 * 1024
 AUDIT_BACKUP_COUNT = 4
+
+# Label-level controls; missing mappings inherit the legacy global dry-run flag.
+CONF_LABEL_SIMULATIONS = "label_simulations"
+CONF_LABEL_BOUNDARIES = "label_boundaries"
+CONF_POLICY_IDS = "policy_ids"
+CONF_ACTIVE_LABELS = "active_labels"
+from homeassistant.const import Platform
+
+PLATFORMS = (Platform.SENSOR, Platform.NUMBER, Platform.SELECT, Platform.SWITCH)
+STATE_STORE_VERSION = 1
+MAX_AUDIT_PREVIEW = 20
+MAX_ANCHORS_PER_RUN = 100

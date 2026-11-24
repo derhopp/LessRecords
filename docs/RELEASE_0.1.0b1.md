@@ -1,0 +1,35 @@
+# LessRecords 0.1.0b1 — pre-release candidate notes
+
+**State:** Candidate source code; a GitHub pre-release has **not** been
+published merely by committing this file or changing the manifest version.
+
+## New
+
+- One HA virtual **purge device** per label with editable target-label
+  picker, retention-days number, per-label simulation switch, per-label
+  historical-boundary switch, matching-devices sensor and three timestamps.
+- Shared daily local purge time remains at the integration level.
+- Integration hub with an Audit log sensor and downloadable diagnostics
+  excerpt of recent JSON-lines events.
+- Experimental SQLite Recorder-thread historical retention-boundary
+  preservation for sparse historical states (OFF by default).
+- More SQLite safety regression tests and full German/English entity labels.
+
+## Important behavior change
+
+**Existing installations automatically return to simulation mode** on first
+upgrade because live purge permission must not migrate silently into the new
+per-label switch model. After reviewing the affected scope in integration
+options, disable simulation on each purge device you want to run live.
+Entities bearing any simulated configured label are not deleted by
+LessRecords. Global Recorder purge remains unaffected.
+
+## Limitations
+
+- This version only supports SQLite Recorder.
+- A submitted purge request is not a verified record deletion.
+- Recorder's global auto purge can delete unmarked entities independently.
+- Synthetic boundary states may mislead counters and stateful calculations;
+  do not enable without a restorable backup and successful integration tests.
+- The boundary implementation uses internal HA Recorder APIs and will
+  need compatibility verification against future Home Assistant versions.

@@ -1,0 +1,166 @@
+{
+  "title": "LessRecords",
+  "config": {
+    "flow_title": "Configure LessRecords",
+    "step": {
+      "user": {
+        "title": "Schedule and audit log",
+        "description": "LessRecords starts in simulation mode and never deletes data during setup. Choose a daily local time away from Recorder's nightly maintenance (around 04:12). Keep Recorder auto_purge enabled and set its purge_keep_days to at least your longest label retention.",
+        "data": {
+          "run_time": "Daily purge time (Home Assistant local time)",
+          "audit_log": "Write to a dedicated rotating audit log (recommended)"
+        }
+      },
+      "label": {
+        "title": "Add a label retention policy",
+        "description": "Select a label applied directly to entities and a retention period in whole days (1–3650). Add further labels as needed. If several labels match, the longest retention wins.",
+        "data": {
+          "label": "Entity label",
+          "keep_days": "Retain detailed states (days)",
+          "add_another": "Add another label"
+        }
+      },
+      "warning": {
+        "title": "Review data-loss and Recorder warnings",
+        "description": "**Important:** Recorder purging is irreversible. Make a verified backup first. Home Assistant's independent global purge still affects all entities, including those without LessRecords labels. Long-term statistics are outside LessRecords scope. Neither simulation nor the Recorder purge action guarantees immediate disk space recovery. The initial installation always runs in simulation mode; destructive purging requires a second preview and explicit activation in integration options.",
+        "data": {
+          "acknowledge": "I have read and understood these warnings"
+        }
+      }
+    },
+    "error": {
+      "invalid_time": "Enter a valid local time.",
+      "invalid_retention": "Retention must be a whole number of days between 1 and 3650.",
+      "duplicate_label": "This label already has a retention policy.",
+      "unknown_label": "The selected label does not exist.",
+      "acknowledgement_required": "You must explicitly acknowledge the warnings."
+    },
+    "abort": {
+      "single_instance_allowed": "Only one LessRecords configuration is supported."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "LessRecords options",
+        "menu_options": {
+          "settings": "Global purge schedule and audit logging",
+          "policies": "Manage existing label retention policies",
+          "activate": "Preview and enable destructive purging",
+          "simulate": "Disable purging (simulation only)"
+        }
+      },
+      "settings": {
+        "title": "Daily schedule and audit logging",
+        "description": "All purge devices share this single daily local time. The audit log is visible from the LessRecords Audit log entity and downloadable in integration Diagnostics. Disabling the dedicated file uses the standard Home Assistant log only.",
+        "data": {
+          "run_time": "Daily purge time",
+          "audit_log": "Dedicated rotating audit file"
+        }
+      },
+      "policy_warning": {
+        "title": "Confirm change to retention policy",
+        "description": "**Pending change:** {change}. Saving the change will switch LessRecords to simulation mode and revoke live purge approval. This prevents any unexpected deletion. After checking the simulated scope, explicitly activate live purging again in the options.",
+        "data": {
+          "acknowledge": "I understand the change and want to apply it"
+        }
+      },
+      "activate": {
+        "title": "Preview scope and activate irreversible purge requests",
+        "description": "**Destructive operation.** Targets: **{target_count}**. Retention groups: **{retention_groups}**. Entity IDs (truncated): {targets}. Create a verified backup. Acknowledging enables permission for live purging but per-label Simulation mode switches remain ON initially. Disable a label's Simulation mode on its purge device to opt that label into live deletion. Overlapping entities remain protected if any matching label is simulated. Enabling 'Preserve historical boundary state' creates synthetic backdated Recorder rows from the nearest preceding historical state. This is experimental and can misrepresent data, especially counters, unavailable values and statistics. It requires a new approval after enabling. Global Recorder purge still runs independently. An accepted purge request is not proof of completed deletion.",
+        "data": {
+          "acknowledge": "I have reviewed this scope, verified my backup, and explicitly authorize irreversible deletion"
+        }
+      },
+      "policies": {
+        "title": "Manage label retention policies",
+        "description": "Current label → retention rules: {policies}. Edit a saved value, add a label, or remove one without replacing the other rules.",
+        "menu_options": {
+          "edit_policy": "Edit existing label retention",
+          "add_policy": "Add a label retention policy",
+          "remove_policy": "Remove a label retention policy"
+        }
+      },
+      "edit_policy": {
+        "title": "Choose the policy to edit",
+        "description": "Select an existing label. The dropdown includes its currently saved retention period.",
+        "data": {
+          "label": "Configured label and current retention"
+        }
+      },
+      "edit_retention": {
+        "title": "Edit retention for {label_name}",
+        "description": "Current retention: **{current_days} days**. The stored value is prefilled; change only the number of days. Other labels will not be modified.",
+        "data": {
+          "keep_days": "Keep detailed state history (days)"
+        }
+      },
+      "add_policy": {
+        "title": "Add a label retention policy",
+        "description": "Choose a new label and a retention period (1–3650 whole days). All existing label policies are preserved.",
+        "data": {
+          "label": "New entity label",
+          "keep_days": "Keep detailed state history (days)"
+        }
+      },
+      "remove_policy": {
+        "title": "Remove an existing label policy",
+        "description": "Select the label whose LessRecords policy should be removed. Other policies remain unchanged. At least one label must remain configured.",
+        "data": {
+          "label": "Configured label to remove"
+        }
+      }
+    },
+    "error": {
+      "invalid_time": "Enter a valid local time.",
+      "invalid_retention": "Retention must be between 1 and 3650 whole days.",
+      "duplicate_label": "This label is already configured.",
+      "unknown_label": "The selected label does not exist.",
+      "acknowledgement_required": "Explicit acknowledgement is required.",
+      "scope_changed": "The entity scope changed during review. Reopen the activation screen to review it again."
+    },
+    "abort": {
+      "unsafe_recorder": "Cannot safely activate LessRecords: {reason}",
+      "invalid_policies": "The current retention policies are invalid. No changes were saved.",
+      "policies_changed": "The saved policies changed during this operation. Reopen the options and review the latest values.",
+      "last_policy_required": "At least one label retention policy must remain configured. Add another label before removing this one."
+    }
+  },
+  "entity": {
+    "number": {
+      "retention_days": {
+        "name": "Retention days"
+      }
+    },
+    "select": {
+      "target_label": {
+        "name": "Target label"
+      }
+    },
+    "switch": {
+      "simulation": {
+        "name": "Simulation mode"
+      },
+      "preserve_boundary": {
+        "name": "Preserve historical boundary state"
+      }
+    },
+    "sensor": {
+      "matching_devices": {
+        "name": "Matching devices"
+      },
+      "last_purge_run": {
+        "name": "Last purge run"
+      },
+      "last_run": {
+        "name": "Last run"
+      },
+      "next_purge_run": {
+        "name": "Next purge run"
+      },
+      "audit_log": {
+        "name": "Audit log"
+      }
+    }
+  }
+}

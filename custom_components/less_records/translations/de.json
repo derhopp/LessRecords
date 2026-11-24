@@ -44,7 +44,7 @@
       "init": {
         "title": "LessRecords-Optionen",
         "menu_options": {
-          "settings": "Tageszeit und Audit-Protokoll",
+          "settings": "Gemeinsame Purge-Uhrzeit und Audit-Protokoll",
           "policies": "Bestehende Label-Aufbewahrungsregeln verwalten",
           "activate": "Vorschau und echtes Löschen aktivieren",
           "simulate": "Löschen deaktivieren (nur Simulation)"
@@ -52,7 +52,7 @@
       },
       "settings": {
         "title": "Tageszeit und Audit-Protokoll",
-        "description": "Änderungen von Uhrzeit oder Logging umgehen die bisher freigegebenen Löschziele nicht. Ohne Datei-Protokollierung werden nur die normalen Home-Assistant-Logs verwendet.",
+        "description": "Alle Purge-Geräte verwenden diese eine tägliche lokale Uhrzeit. Das Audit-Protokoll ist über die LessRecords-Entität „Audit-Protokoll“ sichtbar und unter Integrationsdiagnose herunterladbar. Ohne eigene Logdatei wird nur das Home-Assistant-Standardlog genutzt.",
         "data": {
           "run_time": "Tägliche Purge-Uhrzeit",
           "audit_log": "Separate rotierende Audit-Datei"
@@ -67,7 +67,7 @@
       },
       "activate": {
         "title": "Löschumfang prüfen und echtes Löschen aktivieren",
-        "description": "**Unumkehrbarer Vorgang.** Betroffene Entitäten: **{target_count}**. Aufbewahrungsgruppen: **{retention_groups}**. Ziel-Entitäts-IDs (gekürzte Vorschau): {targets}. Es werden nur detaillierte Recorder-Zustände angesteuert. Das globale Recorder-Purge läuft unabhängig weiter. Erstelle zuvor ein Datenbank-Backup. Die Freigabe gilt nur, solange Regelwerk und betroffene Entitäts-IDs unverändert bleiben. Änderungen des Umfangs blockieren weitere echte Löschungen. Eine angenommene Recorder-Anforderung bestätigt nicht, dass Datensätze tatsächlich gelöscht wurden.",
+        "description": "**Unumkehrbarer Vorgang.** Ziele: **{target_count}**. Aufbewahrungsgruppen: **{retention_groups}**. Entitäts-IDs (gekürzt): {targets}. Erstelle ein geprüftes Backup. Die Bestätigung erlaubt echtes Purging, aber die Simulationsschalter aller Labels bleiben zunächst AN. Deaktiviere den Simulationsmodus am jeweiligen Purge-Gerät, wenn für dieses Label wirklich gelöscht werden soll. Entitäten mit mehreren Labels sind geschützt, sobald mindestens eines ihrer Labels simuliert wird. Der Schalter „Historischen Grenz-Datenpunkt erhalten“ erzeugt künstliche, rückdatierte Recorder-Einträge anhand des zuletzt davor aufgezeichneten Zustands. Dies ist experimentell und kann Daten falsch darstellen – besonders Zähler, nicht verfügbare Zustände und Statistiken. Nach Aktivierung ist eine neue Freigabe erforderlich. Das globale Recorder-Purge läuft unabhängig weiter. Eine angenommene Löschanforderung ist kein Nachweis einer abgeschlossenen Löschung.",
         "data": {
           "acknowledge": "Ich habe die Löschziele geprüft, ein Backup kontrolliert und genehmige die unumkehrbare Löschung ausdrücklich"
         }
@@ -124,6 +124,43 @@
       "invalid_policies": "Die vorhandenen Aufbewahrungsregeln sind ungültig. Es wurden keine Änderungen gespeichert.",
       "policies_changed": "Die gespeicherten Regeln haben sich während der Bearbeitung geändert. Öffne die Optionen erneut und prüfe die aktuellen Werte.",
       "last_policy_required": "Mindestens ein Label muss konfiguriert bleiben. Füge ein weiteres Label hinzu, bevor du dieses entfernst."
+    }
+  },
+  "entity": {
+    "number": {
+      "retention_days": {
+        "name": "Aufbewahrungszeit (Tage)"
+      }
+    },
+    "select": {
+      "target_label": {
+        "name": "Zugeordnetes Label"
+      }
+    },
+    "switch": {
+      "simulation": {
+        "name": "Simulationsmodus"
+      },
+      "preserve_boundary": {
+        "name": "Historischen Grenz-Datenpunkt erhalten"
+      }
+    },
+    "sensor": {
+      "matching_devices": {
+        "name": "Passende Geräte"
+      },
+      "last_purge_run": {
+        "name": "Letzter Purge-Lauf"
+      },
+      "last_run": {
+        "name": "Letzter Lauf"
+      },
+      "next_purge_run": {
+        "name": "Nächster Purge-Lauf"
+      },
+      "audit_log": {
+        "name": "Audit-Protokoll"
+      }
     }
   }
 }

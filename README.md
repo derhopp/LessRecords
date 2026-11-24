@@ -1,61 +1,67 @@
 # LessRecords
 
-**Safe, label-based retention for Home Assistant's detailed Recorder state history.**
+**Safe, label-based retention for Home Assistant Recorder state history.**
 
-> [!WARNING]
-> **Pre-release development build, not validated for production.** No GitHub
-> Release has been published and the required Home Assistant / HACS CI checks
-> are not yet verified. Recorder purging is irreversible. Always test on a
-> disposable Home Assistant instance and take a verified backup first.
+> [!CAUTION]
+> **Experimental 0.1.0b1 code — not a verified GitHub pre-release.**
+> Live deletion is irreversible. Always back up your SQLite Recorder database
+> and test on a disposable Home Assistant instance first. The experimental
+> historical-boundary feature uses Recorder-internal SQLAlchemy/queue APIs
+> and has not yet passed full Home Assistant 2026.11 integration testing.
 
-LessRecords complements Home Assistant's built-in Recorder auto-purge by
-assigning a shorter retention to entities with explicitly selected labels,
-while keeping a longer global history retention for the entities that need it.
+LessRecords lets you retain detailed Recorder history for different amounts
+of time depending on **direct entity labels**, while preserving Home Assistant's
+own global Recorder auto-purge.
 
-For example, if Recorder globally retains 365 days, LessRecords may retain
-only 7 days for label \`temporary\` and 90 days for label \`normal\`, while
-leaving other entities **untouched by LessRecords**. The built-in global
-Recorder purge still independently affects **all** recorded entities.
+## Per-label purge devices
 
-## Implemented v1 scope
+Every configured label creates its own virtual **purge device**, named after
+the Home Assistant label by default. Under **Settings → Devices & services →
+LessRecords → Devices**, each device exposes:
 
-- Configure **one or more entity labels**; each must have a whole-day
-  retention in **1–3650 days**. Add as many distinct label policies as needed.
-- In **Configure → Label retention policies**, review saved label/retention
-  mappings and **edit an existing retention directly**, with the current
-  value prefilled. Add or remove individual labels without re-entering any
-  other policies. The last remaining policy cannot be removed.
-- Actual policy changes explicitly revoke live purge approval and switch to
-  simulation mode; unchanged edits do not revoke an existing approval. A
-  concurrent update to the policy set aborts an edit instead of overwriting it.
-- A daily local-time schedule (default: **06:30**), no purge on startup.
-- Match **direct labels on enabled entity registry entries**, not labels
-  inherited from devices or areas.
-- If an entity has several matching labels, the **longest** retention wins.
-- Unmatched/unlabeled entities are never passed to LessRecords.
-- **Simulation is enabled on first installation**. It logs proposed purge
-  requests but cannot delete anything.
-- Enable destructive purging only from integration options, after seeing
-  the current entity scope and explicitly acknowledging the irreversible action.
-- Exact approvals are invalidated when the effective label-policy/target
-  snapshot changes; changing policies explicitly resets to simulation.
-- A separate, rotated JSON-lines audit log is enabled by default and can be
-  disabled by the user.
-- Error and scope-validation failures block service submission; errors in an
-  enabled audit file block destructive requests.
-- German and English setup, options, warnings and errors.
+| Device entity | Meaning |
+| --- | --- |
+| **Target label** (select) | Change the HA label via picker without recreating all policies |
+| **Retention days** (number) | Edit its current retention (1–3650 whole days) |
+| **Matching devices** (sensor) | Number of unique physical HA device IDs of directly labeled entities (attribute \`matching_entities\` also counts matched entities without a device) |
+| **Last purge run** (timestamp) | Last time a *live purge request was submitted*, not verified completion |
+| **Last run** (timestamp) | Last simulation or live attempt |
+| **Next purge run** (timestamp) | Next daily scheduled time when this label is live; unavailable while simulated |
+| **Simulation mode** (switch) | ON = audit only, OFF = request destructive Recorder purge |
+| **Preserve historical boundary state** (switch) | **Experimental, OFF by default:** create an anchor state at the retention boundary before deleting older history |
 
-**Explicitly out of scope for v1:** synthetic historical state records at the
-retention boundary; long-term/short-term statistics, events, and arbitrary
-SQL deletes; MariaDB and PostgreSQL.
+All devices share one daily **Purge time**, configured through **LessRecords →
+Configure → Global purge schedule and audit logging**. Default 06:30 in
+Home Assistant's configured local timezone. No automatic catch-up run on
+startup. Existing deployments are **migrated into simulation mode** so they
+cannot silently inherit live approval after the upgrade.
 
-## Important prerequisite: keep Recorder's built-in auto-purge
+You can add or remove label policies from **Configure → Manage label retention
+policies**. At least one policy must remain. Any change to label assignment,
+retention, or boundary preservation **revokes live purge approval and switches
+all labels back to simulation**.
 
-Set \`purge_keep_days\` to **at least your longest configured label retention**.
-The built-in \`auto_purge\` must remain enabled. LessRecords checks both at
-runtime and refuses any run if the prerequisite is violated or cannot be read.
+To enable a real purge, first review the effective entity scope in **LessRecords
+→ Configure → Preview and enable destructive purging**, explicitly acknowledge
+the warnings, then turn OFF *Simulation mode* on individual purge devices.
+A label remains simulated unless explicitly opted into live execution.
+**If an entity has several configured labels and any of them is simulated,
+that entity is never purged by LessRecords.** Otherwise the longest retention
+wins. A changed entity scope blocks live operations until reapproved.
 
-For example, with a longest label retention of 365 days:
+## Recorder prerequisites and scope
+
+- Home Assistant **2026.11 or newer**, **SQLite Recorder only** for v1.
+- Recorder's built-in \`auto_purge\` stays enabled.
+- \`recorder.purge_keep_days\` must be at least the **longest selected label
+  retention**, or LessRecords refuses to run.
+- Only detailed state history is targeted. Long-term statistics, short-term
+  statistics and generic events are outside the explicit LessRecords scope.
+- Entities without a configured matching label are **never targeted by
+  LessRecords**; Home Assistant's global purge still applies to them.
+- No wildcard deletions or autonomous startup purge.
+
+Example:
 
 \`\`\`yaml
 recorder:
@@ -63,75 +69,63 @@ recorder:
   purge_keep_days: 365
 \`\`\`
 
-This **does not exempt** unlabeled entities from the standard global 365-day
-purge. It only means LessRecords never targets those entities itself.
+## Audit in the Home Assistant GUI
 
-## Setup (development branch, no official Release)
+LessRecords now creates an **integration hub device** containing an
+**Audit log** sensor. Its state shows the most recent audit action and
+attributes contain the latest event and the log location.
 
-1. Back up Home Assistant, including the Recorder database.
-2. Verify you use **Home Assistant Core 2026.11 or newer** and **SQLite**
-   Recorder (only SQLite is tested/allowed by the runtime guard).
-3. Add \`derhopp/LessRecords\` as a custom integration repository via Home
-   Assistant Marketplace (or a compatible older HACS installation), selecting
-   the **main/default branch**, or manually copy \`custom_components/less_records\`
-   to your Home Assistant \`custom_components/\` folder.
-4. Restart Home Assistant.
-5. Go to **Settings → Devices & services → Add integration → LessRecords**.
-   Select the local run time, logging preference and label/retention pairs.
-6. Acknowledge the setup warnings; LessRecords remains in **simulation mode**.
-7. Examine the simulated requests in \`<config>/less_records_audit.log\`
-   (JSON lines, rotated at 5 MiB with four backups) and check the affected
-   entities before allowing deletion.
-8. Use the integration's **Configure/Options → Preview and enable destructive
-   purging** screen. Review the entity count, retention groups and preview,
-   then explicitly approve the operation. A later scope change blocks live
-   purging until re-approval.
+Go to **Settings → Devices & services → LessRecords → Download diagnostics**
+to download a JSON report with **the 20 most recent audit records** and
+per-label run timestamps. The full, rotating JSON-lines audit file is still
+available at \`/config/less_records_audit.log\` (5 MiB × 5 files counting
+rotations). Auditing is enabled by default; if disabled, events go to the
+normal Home Assistant log instead. Audit events distinguish \`simulated\`,
+\`request_pending\`, \`request_submitted\`, \`request_failed\` and \`blocked\`.
+Submitted does **not** mean confirmed successful deletion.
 
-The installation will be considered supported only after the CI gates and
-SQLite integration tests have passed. **No releases or tags** will be made
-until the maintainer explicitly requests them.
+## Experimental historical retention-boundary state
 
-## How it works and what the audit means
+An entity that records infrequently can otherwise lose its entire detailed
+history after purge, even though its last reported value is still meaningful.
+The **Preserve historical boundary state** switch addresses this by copying
+the nearest historical state **older than the cutoff** into a synthetic
+Recorder state **30 seconds after the cutoff**. It uses the original
+state text and attributes reference; it does not change the entity's current
+live state, publish a state-change event or change statistics tables.
 
-At the scheduled time LessRecords reads the Home Assistant entity/label
-registries, resolves each explicit entity ID and its longest matching
-retention, and checks Recorder readiness and global retention. In simulation
-it only logs \`simulated\` events. After live approval it submits the built-in
-\`recorder.purge_entities\` action, using **only explicit entity IDs** and
-\`keep_days\`. Calls run via Recorder's own queue rather than direct SQL.
+For enabled devices, the Recorder worker creates the synthetic rows through
+a scoped SQLAlchemy session, and only then executes the normal
+\`PurgeEntitiesTask\` within that same worker, preventing a competing
+SQLite transaction. Missing, \`unknown\` and \`unavailable\` sources are
+skipped; duplicate boundary-window records are avoided. If insertion raises
+an error, the matching purge batch is **not executed**.
 
-Audit events include \`request_pending\`, \`request_submitted\`,
-\`request_failed\`, \`blocked\`, \`no_targets\` and \`simulated\`. A submitted
-request does **not** prove the Recorder finished deleting rows. The preview
-shows policy targets, not an exact count of SQL records that would be deleted.
-State values and attributes are never copied to the audit file.
+**Important limitations:** This relies on internal Home Assistant Recorder
+interfaces and is not a supported public API. Synthetic historical values
+are estimates, not real measurements. They may be misleading for counters,
+integrals, totals, rapidly varying sensors, and state-based automations.
+The feature must be enabled **per device**, followed by a renewed live
+approval. Default is OFF. **Do not enable it on production systems until a
+passing SQLite Recorder end-to-end test and backup restore test exist.**
 
-There are safety limits: **1,500 targeted entities maximum** per run and
-50 entity IDs per Recorder request; missing labels, invalid registry data,
-SQLite mismatch, unavailable Recorder, unsupported global settings or
-mid-run scope changes block deletion. Disabled entities are skipped.
-The target set is calculated from the current registry on every run;
-an expansion requires explicit reapproval.
+## Installation / development status
 
-**Disk space is not necessarily released immediately.** Home Assistant's
-built-in Recorder repack/vacuum schedule remains responsible for database
-compaction. Sparse-history entities may not display a leading value at the
-retention boundary; artificial backdated history remains a deferred feature.
-Home Assistant's long-term statistics follow their own retention rules.
+The source lives on [GitHub](https://github.com/derhopp/LessRecords), branch
+\`main\`. A valid HACS/Marketplace package and completed CI checks are
+required before a production recommendation. Until a release is actually
+published, do not treat version \`0.1.0b1\` in the manifest as an available
+GitHub pre-release.
 
-## Development, tests, and safety gates
+## Development and testing
 
-A push to \`main\` triggers \`.github/workflows/validate.yml\`:
-
-- Python/pytest functional and safety regression tests with Home Assistant
-  2026.11 and Python 3.14.
-- Ruff lint, compilation and JSON validation.
-- Home Assistant **hassfest**.
-- HACS/Marketplace validation via \`hacs/action\` (\`category: integration\`).
-
-See [requirements](docs/REQUIREMENTS.md) and [testing](docs/TEST_PLAN.md).
-No workflow creates a release, tag or published package.
+GitHub Actions is configured for pytest, Ruff, JSON validation,
+Home Assistant hassfest and HACS/Marketplace validation.
+The test suite includes label overlap, simulation, audit failures,
+device-policy operations and disposable SQLite boundary-state behavior.
+**Passing CI and full HA integration tests are not yet verified.**
+See [testing](docs/TEST_PLAN.md) and [release candidate notes](docs/RELEASE_0.1.0b1.md).
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT – see [LICENSE](LICENSE).

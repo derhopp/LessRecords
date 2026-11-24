@@ -13,6 +13,8 @@ from .const import (
     CONF_APPROVED_FINGERPRINT,
     CONF_AUDIT_LOG,
     CONF_DRY_RUN,
+    CONF_LABEL_BOUNDARIES,
+    CONF_LABEL_SIMULATIONS,
     CONF_POLICIES,
     CONF_RUN_TIME,
     DEFAULT_AUDIT_LOG,
@@ -137,6 +139,8 @@ class LessRecordsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                             **self._settings,
                             CONF_POLICIES: self._policies,
                             CONF_DRY_RUN: DEFAULT_DRY_RUN,
+                            CONF_LABEL_SIMULATIONS: dict.fromkeys(self._policies, True),
+                            CONF_LABEL_BOUNDARIES: dict.fromkeys(self._policies, False),
                             CONF_APPROVED_FINGERPRINT: "",
                         },
                     )
@@ -421,6 +425,7 @@ class LessRecordsOptionsFlow(config_entries.OptionsFlow):
                 return self._save(
                     {
                         CONF_POLICIES: dict(pending),
+                        CONF_LABEL_SIMULATIONS: dict.fromkeys(pending, True),
                         CONF_DRY_RUN: True,
                         CONF_APPROVED_FINGERPRINT: "",
                     }

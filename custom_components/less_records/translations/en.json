@@ -44,7 +44,7 @@
       "init": {
         "title": "LessRecords options",
         "menu_options": {
-          "settings": "Daily schedule and audit logging",
+          "settings": "Global purge schedule and audit logging",
           "policies": "Manage existing label retention policies",
           "activate": "Preview and enable destructive purging",
           "simulate": "Disable purging (simulation only)"
@@ -52,7 +52,7 @@
       },
       "settings": {
         "title": "Daily schedule and audit logging",
-        "description": "Changes to the schedule or logging do not bypass the existing approved entity scope. Disabling the file log means only Home Assistant's standard logging is used.",
+        "description": "All purge devices share this single daily local time. The audit log is visible from the LessRecords Audit log entity and downloadable in integration Diagnostics. Disabling the dedicated file uses the standard Home Assistant log only.",
         "data": {
           "run_time": "Daily purge time",
           "audit_log": "Dedicated rotating audit file"
@@ -67,7 +67,7 @@
       },
       "activate": {
         "title": "Preview scope and activate irreversible purge requests",
-        "description": "**Destructive operation.** Affected entities: **{target_count}**. Retention groups: **{retention_groups}**. Target entity IDs (truncated preview): {targets}. Only detailed Recorder states will be targeted. Recorder's global purge remains independent. Back up the database before proceeding. This approval is valid only while the exact policy and affected entity IDs remain unchanged. Any subsequent scope change blocks live purging until reapproved. Requests are queued by Recorder; successful submission is not confirmation that rows were deleted.",
+        "description": "**Destructive operation.** Targets: **{target_count}**. Retention groups: **{retention_groups}**. Entity IDs (truncated): {targets}. Create a verified backup. Acknowledging enables permission for live purging but per-label Simulation mode switches remain ON initially. Disable a label's Simulation mode on its purge device to opt that label into live deletion. Overlapping entities remain protected if any matching label is simulated. Enabling 'Preserve historical boundary state' creates synthetic backdated Recorder rows from the nearest preceding historical state. This is experimental and can misrepresent data, especially counters, unavailable values and statistics. It requires a new approval after enabling. Global Recorder purge still runs independently. An accepted purge request is not proof of completed deletion.",
         "data": {
           "acknowledge": "I have reviewed this scope, verified my backup, and explicitly authorize irreversible deletion"
         }
@@ -124,6 +124,43 @@
       "invalid_policies": "The current retention policies are invalid. No changes were saved.",
       "policies_changed": "The saved policies changed during this operation. Reopen the options and review the latest values.",
       "last_policy_required": "At least one label retention policy must remain configured. Add another label before removing this one."
+    }
+  },
+  "entity": {
+    "number": {
+      "retention_days": {
+        "name": "Retention days"
+      }
+    },
+    "select": {
+      "target_label": {
+        "name": "Target label"
+      }
+    },
+    "switch": {
+      "simulation": {
+        "name": "Simulation mode"
+      },
+      "preserve_boundary": {
+        "name": "Preserve historical boundary state"
+      }
+    },
+    "sensor": {
+      "matching_devices": {
+        "name": "Matching devices"
+      },
+      "last_purge_run": {
+        "name": "Last purge run"
+      },
+      "last_run": {
+        "name": "Last run"
+      },
+      "next_purge_run": {
+        "name": "Next purge run"
+      },
+      "audit_log": {
+        "name": "Audit log"
+      }
     }
   }
 }

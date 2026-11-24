@@ -21,6 +21,8 @@ def make_entry(dry_run: bool, signature: str = "") -> SimpleNamespace:
             "audit_log": True,
             "dry_run": dry_run,
             "approved_fingerprint": signature,
+            "label_simulations": {"a": dry_run},
+            "label_boundaries": {"a": False},
         },
         options={},
     )
@@ -32,8 +34,11 @@ def make_manager(dry_run: bool, signature: str = "") -> tuple:
         config=SimpleNamespace(path=lambda filename: filename),
         async_add_executor_job=AsyncMock(),
     )
-    manager = LessRecordsManager(hass, make_entry(dry_run, signature))
+    with patch("custom_components.less_records.manager.Store"):
+        manager = LessRecordsManager(hass, make_entry(dry_run, signature))
     manager._audit = AsyncMock()
+    manager._persist = AsyncMock()
+    manager._matching_label_ids = MagicMock(return_value={"a"})
     return manager, hass
 
 
@@ -143,3 +148,44 @@ def test_invalid_daily_time(invalid: str) -> None:
 
 def test_valid_daily_time() -> None:
     assert normalize_run_time("06:30") == "06:30:00"
+
+
+@pytest.mark.asyncio
+async def test_overlapping_simulated_label_protects_live_label_entity() -> None:
+    manager, hass = make_manager(False, PLAN.fingerprint)
+    manager.entry.data["policies"] = {"a": 7, "b": 365}
+    manager.entry.data["label_simulations"] = {"a": True, "b": False}
+    manager._matching_label_ids = MagicMock(return_value={"a", "b"})
+    plan = PurgePlan({365: ("sensor.one",)}, PLAN.fingerprint)
+    with patch(
+        "custom_components.less_records.manager.preflight", return_value=plan
+    ):
+        await manager.async_run()
+    hass.services.async_call.assert_not_awaited()
+    assert any(
+        call.args[0] == "simulated"
+        for call in manager._audit.await_args_list
+    )
+
+
+@pytest.mark.asyncio
+async def test_boundary_uses_recorder_queue_not_standard_service() -> None:
+    manager, hass = make_manager(False, PLAN.fingerprint)
+    manager.entry.data["label_boundaries"] = {"a": True}
+    with (
+        patch(
+            "custom_components.less_records.manager.preflight",
+            return_value=PLAN,
+        ),
+        patch(
+            "custom_components.less_records.manager.check_recorder"
+        ) as recorder,
+        patch(
+            "custom_components.less_records.manager.queue_boundary_purge"
+        ) as queued,
+    ):
+        await manager.async_run()
+    hass.services.async_call.assert_not_awaited()
+    queued.assert_called_once_with(
+        recorder.return_value, ["sensor.one", "sensor.two"], 7
+    )

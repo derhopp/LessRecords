@@ -1,62 +1,49 @@
-# Mandatory Test and Release Gates
+# LessRecords — Test matrix and release gate
 
-**Status:** automated unit/safety tests and validation workflows exist on
-\`main\`. These files do not by themselves establish that CI has passed.
-Every destructive-feature change must be validated before production use.
+Status: **Unverified beta candidate.** GitHub Actions and test code do not
+establish a passing result by themselves.
 
-## Automated on push to main
+## Automated CI
 
-- **Python 3.14 / Home Assistant 2026.11:** pytest regression suite.
-- **Ruff:** static linting.
-- **Compilation/JSON:** Python and translations/manifest/HACS JSON syntax.
-- **hassfest:** custom integration metadata and translations.
-- **HACS action:** Marketplace/HACS repository validation with
-  \`category: integration\`.
-- No automated tags, GitHub Releases or package publication.
+- Pytest safety tests: multiple label conflicts; simulated-label veto;
+  per-policy retentions; approval fingerprints; audit failures; stale changes.
+- SQLite SQLAlchemy integration tests in disposable databases: sparse-state
+  anchor preservation, source selection, idempotency and refusal for
+  \`unknown\`/\`unavailable\` and overly large batches.
+- Options-flow tests: editing one existing policy without changing other
+  policies; adding/removing labels; unchanged settings; invalid activation.
+- Python 3.14 / Home Assistant 2026.11 compatibility, compilation, JSON,
+  Ruff, Home Assistant hassfest, HACS/Marketplace validation.
 
-## Regression test matrix
+## Mandatory before releasing a pre-release
 
-| Case | Expected |
-| --- | --- |
-| No labels, invalid retention, fractional or bool days | Configuration rejected |
-| Missing configured label or malformed entity | Entire purge run blocked |
-| Direct label vs. unmatched/unlabeled | Only matching entity targeted |
-| Multiple matching labels | Longest retention, exactly one target ID |
-| Disabled entities | Excluded from LessRecords |
-| Configuration or entity membership changes | Approval fingerprint changes |
-| Simulation | Audit only, zero destructive service calls |
-| Live without approval | Zero destructive service calls |
-| Live with approval | Only recorder.purge_entities and explicit IDs |
-| Audit write failure | No destructive service calls |
-| Recorder submission failure | request_failed; never deletion success |
-| Recorder backend not SQLite | Fail closed |
-| Global auto_purge disabled / global purge retention too short | Fail closed |
-| Recorder not ready / migrating | Fail closed |
-| More than 1500 entities | Fail closed |
-| Invalid local time | Configuration rejected |
-| Edit an existing retention | Saved days prefilled, only selected policy changed |
-| Add a label retention policy | Preserve existing configured mappings |
-| Remove one label retention policy | Preserve all other mappings |
-| Attempt to remove final policy | Reject; at least one policy remains |
-| Concurrent policy edit | Reject stale update without overwriting newer settings |
-| Policy change versus no-op | Changed policy resets to simulation/revokes approval; no-op retains existing approval |
-| Policy change without explicit confirmation | Reject and preserve persisted settings |
+- [ ] Python/pytest, hassfest, HACS workflows run and pass against the exact
+  commit from \`main\`.
+- [ ] HA device registry creates exactly one **stable device per label** and
+  one integration hub for audit, and assigns all sensors/switches/selects.
+- [ ] Existing v1 configurations migrate into **simulation mode**, preserving
+  existing retention values without any destructive execution.
+- [ ] Per-label **simulation**, independent enablement, matching physical-device
+  and entity counts, last run, last request, and next scheduled time verified.
+- [ ] Label picker and retention number update the right policy only;
+  renaming a label keeps stable device ID; stale edits fail closed.
+- [ ] Integration-level daily time controls all devices after restart and
+  options reload; DST and duplicate-run behavior tested.
+- [ ] Audit sensor is readable; Download diagnostics includes latest
+  20 events but does not expose unrelated HA secrets.
+- [ ] SQLite Recorder worker task inserts a sparse state's last discarded
+  value just inside the retention window and purges only the intended entity.
+- [ ] A real HA Recorder instance validates synthetic \`States\` metadata,
+  attributes, timestamps, consecutive runs, and history presentation.
+- [ ] No boundary insertion or Recorder purge when that label is simulated.
+- [ ] Last permitted batch cannot delete another simulated label's history.
+- [ ] Purge blocked if boundary write fails; Recorder worker remains healthy.
+- [ ] Tests for large data sets and HA's built-in global auto-purge coexistence.
+- [ ] Verify backup and actual recovery of a disposable SQLite database.
+- [ ] Independent maintainers review version-sensitive Recorder internals.
+- [ ] Owner explicitly authorizes the pre-release and its final validated SHA.
 
-## Required before production approval
+## Release safety
 
-- **Disposable SQLite Recorder integration database** seeded with precise
-  timestamps and known states: test actual row retention after the Home
-  Assistant Recorder purge queue drains, confirm unaffected entities remain.
-- Validate newly labeled entities, relabeling after approval, entity renames,
-  sparse histories, unknown/unavailable states and overlapping maintenance.
-- Verify options flow, both locale translations, scheduling and restart/DST
-  behavior in a real Home Assistant 2026.11 test instance.
-- Confirm Marketplace/HACS custom repository installation from \`main\`,
-  brand artwork, manifest and minimum HA version.
-- Verify the rotating JSON audit and failure handling with a real filesystem.
-- Review runtime, database size and repack behavior; distinguish queued
-  requests from completed deletion.
-- Record passing CI run and verify a restorable backup before allowing
-  production activation.
-
-Release only when the owner explicitly requests it and all gates pass.
+No tag or GitHub pre-release should be created if any mandatory item remains
+unverified. A GitHub release must be marked **pre-release**, not stable.
