@@ -15,8 +15,6 @@ from .const import (
     CONF_LABEL_SIMULATIONS,
     CONF_POLICIES,
     CONF_POLICY_IDS,
-    DEFAULT_DRY_RUN,
-    DOMAIN,
     MAX_KEEP_DAYS,
 )
 from .manager import current_plan, get_settings

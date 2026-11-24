@@ -1,5 +1,7 @@
 """Constants for LessRecords."""
 
+from homeassistant.const import Platform
+
 DOMAIN = "less_records"
 
 CONF_POLICIES = "policies"
@@ -23,8 +25,6 @@ CONF_LABEL_SIMULATIONS = "label_simulations"
 CONF_LABEL_BOUNDARIES = "label_boundaries"
 CONF_POLICY_IDS = "policy_ids"
 CONF_ACTIVE_LABELS = "active_labels"
-from homeassistant.const import Platform
-
 PLATFORMS = (Platform.SENSOR, Platform.NUMBER, Platform.SELECT, Platform.SWITCH)
 STATE_STORE_VERSION = 1
 MAX_AUDIT_PREVIEW = 20

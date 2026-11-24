@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from homeassistant.components.switch import SwitchEntity
-from homeassistant.exceptions import HomeAssistantError
 
 from .const import CONF_POLICIES
 from .entity import LabelPolicyEntity
