@@ -35,6 +35,18 @@ class SimulationSwitch(LabelPolicyEntity, SwitchEntity):
     def is_on(self) -> bool:
         return is_simulation(get_settings(self.entry), self.label_id)
 
+    @property
+    def extra_state_attributes(self) -> dict[str, str]:
+        """Concise warning shown in the switch's More info details."""
+        german = self.hass.config.language.startswith("de")
+        return {
+            "warning": (
+                "Aus: Löschen erst nach Freigabe. Vorher Backup prüfen."
+                if german
+                else "OFF: deletion requires approval. Verify your backup."
+            )
+        }
+
     async def async_turn_on(self, **kwargs) -> None:
         await async_set_simulation(self.hass, self.entry, self.label_id, True)
 

@@ -69,7 +69,7 @@ async def test_edit_updates_only_selected_policy_and_revokes_approval(editor):
     assert result["type"] == "create_entry"
     assert result["data"]["policies"] == {"heat": 7, "power": 30}
     assert result["data"]["run_time"] == BASE["run_time"]
-    assert result["data"]["dry_run"] is True
+    assert result["data"]["dry_run"] is False
     assert result["data"]["approved_fingerprint"] == ""
 
 

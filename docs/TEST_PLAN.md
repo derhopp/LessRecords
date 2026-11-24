@@ -28,8 +28,8 @@ establish a passing result by themselves.
 - [ ] Every purge device supports its own native **Delete** context-menu
   action and removes only its label policy, never entity Recorder history.
 - [ ] Removing the final policy or the integration hub is rejected.
-- [ ] Removing a policy forces every remaining label back to simulation,
-  clears live approval, and preserves unrelated retention settings.
+- [ ] Removing a policy preserves every remaining simulation switch, invalidates
+  live approval, and preserves unrelated retention settings.
 - [ ] Last run is set even for blocked attempts; next run is shown in both
   live and simulation modes; last purge run is only set for accepted requests.
 - [ ] Minimal global options menu: global configuration, add purge
@@ -56,3 +56,11 @@ establish a passing result by themselves.
 
 No tag or GitHub pre-release should be created if any mandatory item remains
 unverified. A GitHub release must be marked **pre-release**, not stable.
+
+- [ ] Sensor platform accepts all three timestamp entities as SensorEntityDescription
+  with visible defaults and correct unique IDs; absence of run data is unknown,
+  not missing from registry.
+- [ ] Changes to retention/target/boundary, device removal, and setup migration
+  never flip existing simulation switches; new devices default to simulation.
+- [ ] Stale approvals block live requests without overriding the device's
+  switch state; simulations continue per device.

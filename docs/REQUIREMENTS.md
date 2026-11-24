@@ -37,9 +37,11 @@ sensor. The most recent 20 file log entries are accessible through the
 standard Home Assistant **Download diagnostics** action.
 
 Changing an entity target label preserves the purge device unique identifier.
-Editing the label, retention or historical boundary flag revokes all live
-authorizations, sets global dry-run and forces every device into simulation.
-Existing v1 configurations migrate into the same safe state.
+Existing per-device simulation switches are NEVER automatically changed on a
+configuration update or migration. Only new devices default to simulation ON.
+A modified policy/target scope invalidates the prior destructive approval
+fingerprint, but leaves every existing simulation switch intact. Live-mode
+devices remain visibly live and execution is blocked until explicit approval.
 
 Explicit manual approval is required on the integration before the user can
 turn off simulation **on any individual device**. Any entity with a

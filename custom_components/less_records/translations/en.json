@@ -48,7 +48,7 @@
           "add_policy": "Add purge device",
           "activate": "Approve live purging"
         },
-        "description": "Configure label, retention, simulation and boundary preservation directly on each purge device. Remove a purge device from its own device context menu. Only global settings, adding and destructive-operation approval remain here."
+        "description": "Edit label, retention and simulation on each purge device. Here you can add devices, change global settings and approve the current purge scope."
       },
       "settings": {
         "title": "Daily schedule and audit logging",
@@ -60,14 +60,14 @@
       },
       "policy_warning": {
         "title": "Confirm change to retention policy",
-        "description": "**Pending change:** {change}. Saving the change will switch LessRecords to simulation mode and revoke live purge approval. This prevents any unexpected deletion. After checking the simulated scope, explicitly activate live purging again in the options.",
+        "description": "**Planned change:** {change}. Existing simulation switches retain their settings. A changed purge scope invalidates destructive approval; live requests are blocked until you review and approve the new scope in integration options. New purge devices start in simulation.",
         "data": {
           "acknowledge": "I understand the change and want to apply it"
         }
       },
       "activate": {
         "title": "Preview scope and activate irreversible purge requests",
-        "description": "**Destructive operation.** Targets: **{target_count}**. Retention groups: **{retention_groups}**. Entity IDs (truncated): {targets}. Create a verified backup. Acknowledging enables permission for live purging but per-label Simulation mode switches remain ON initially. Disable a label's Simulation mode on its purge device to opt that label into live deletion. Overlapping entities remain protected if any matching label is simulated. Enabling 'Preserve historical boundary state' creates synthetic backdated Recorder rows from the nearest preceding historical state. This is experimental and can misrepresent data, especially counters, unavailable values and statistics. It requires a new approval after enabling. Global Recorder purge still runs independently. An accepted purge request is not proof of completed deletion.",
+        "description": "**Irreversible deletion.** Affected entities: **{target_count}**. Retention groups: **{retention_groups}**. Entity preview: {targets}. Verify a restorable backup. Approval authorizes only the unchanged target scope. Each purge device keeps its simulation switch unchanged. Devices with simulation OFF submit live purge requests only after valid approval. If an entity matches several labels, any simulated label protects it. A submitted request is not proof of deletion.",
         "data": {
           "acknowledge": "I have reviewed this scope, verified my backup, and explicitly authorize irreversible deletion"
         }
@@ -97,7 +97,7 @@
       },
       "add_policy": {
         "title": "Add a label retention policy",
-        "description": "Add a label to create a new purge device. Existing devices and policies remain intact. Adding a label revokes prior destructive approvals and switches all labels to simulation.",
+        "description": "Create a new purge device for the selected label. Existing simulation switches stay unchanged; the new device starts with simulation ON. Changes to the target scope require renewed destructive approval.",
         "data": {
           "label": "New entity label",
           "keep_days": "Keep detailed state history (days)"
@@ -139,7 +139,12 @@
     },
     "switch": {
       "simulation": {
-        "name": "Simulation mode"
+        "name": "Simulation mode",
+        "state_attributes": {
+          "warning": {
+            "name": "Warning"
+          }
+        }
       },
       "preserve_boundary": {
         "name": "Preserve historical boundary state"

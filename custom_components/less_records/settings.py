@@ -10,15 +10,14 @@ from homeassistant.helpers import label_registry as lr
 
 from .const import (
     CONF_APPROVED_FINGERPRINT,
-    CONF_DRY_RUN,
     CONF_LABEL_BOUNDARIES,
     CONF_LABEL_SIMULATIONS,
     CONF_POLICIES,
     CONF_POLICY_IDS,
     MAX_KEEP_DAYS,
 )
-from .manager import current_plan, get_settings
-from .policy import PolicyError, validate_policies
+from .manager import get_settings
+from .policy import validate_policies
 
 
 def stable_id(settings: Mapping[str, Any], label_id: str) -> str:
@@ -37,13 +36,14 @@ def boundary_enabled(settings: Mapping[str, Any], label_id: str) -> bool:
 
 
 def reset_approval(settings: dict[str, Any]) -> dict[str, Any]:
-    """Reset ALL label switches to simulation after a policy/anchor change."""
+    """Invalidate destructive approval, never reset per-device simulation."""
     policies = validate_policies(settings[CONF_POLICIES])
-    settings[CONF_DRY_RUN] = True
+    previous = settings.get(CONF_LABEL_SIMULATIONS, {})
+    settings[CONF_LABEL_SIMULATIONS] = {
+        label: bool(previous.get(label, True)) for label in policies
+    }
     settings[CONF_APPROVED_FINGERPRINT] = ""
-    settings[CONF_LABEL_SIMULATIONS] = dict.fromkeys(policies, True)
     return settings
-
 
 async def async_update_policy(
     hass: Any,
@@ -92,29 +92,23 @@ async def async_update_policy(
     old_boundaries[target] = previous_boundary if boundary is None else boundary
     new_settings[CONF_LABEL_BOUNDARIES] = old_boundaries
 
+    previous_modes = dict(settings.get(CONF_LABEL_SIMULATIONS, {}))
+    selected_mode = previous_modes.pop(label_id, True)
+    previous_modes[target] = selected_mode
+    new_settings[CONF_LABEL_SIMULATIONS] = previous_modes
     reset_approval(new_settings)
     hass.config_entries.async_update_entry(entry, options=new_settings)
 
 
 async def async_set_simulation(hass: Any, entry: Any, label_id: str, enabled: bool) -> None:
-    """Switch one policy. Live mode requires an existing, matching approval."""
+    """Persist a device mode independently of global scope approval.
+
+    The manager rejects any live purge unless the current scope has been
+    explicitly approved; a switch OFF alone can never bypass that check.
+    """
     settings = get_settings(entry)
     if label_id not in validate_policies(settings[CONF_POLICIES]):
         raise HomeAssistantError("The label is no longer configured")
-    if not enabled:
-        if settings.get(CONF_DRY_RUN, True) is not False:
-            raise HomeAssistantError(
-                "Live purge is not approved. Open LessRecords options and review "
-                "the target scope before disabling simulation."
-            )
-        try:
-            plan = current_plan(hass, settings)
-        except (PolicyError, KeyError, TypeError) as err:
-            raise HomeAssistantError(f"Invalid current purge scope: {err}") from err
-        if settings.get(CONF_APPROVED_FINGERPRINT) != plan.fingerprint:
-            raise HomeAssistantError(
-                "The affected entity scope changed; review and approve it again."
-            )
     simulations = dict(settings.get(CONF_LABEL_SIMULATIONS, {}))
     simulations[label_id] = enabled
     if enabled == is_simulation(settings, label_id):

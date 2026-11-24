@@ -49,9 +49,9 @@ async def test_device_menu_removal_removes_only_selected_policy_and_revokes_appr
     assert await async_remove_config_entry_device(hass, entry, device)
     updated = hass.config_entries.async_update_entry.call_args.kwargs["options"]
     assert updated["policies"] == {"long": 365}
-    assert updated["dry_run"] is True
+    assert updated["dry_run"] is False
     assert updated["approved_fingerprint"] == ""
-    assert updated["label_simulations"] == {"long": True}
+    assert updated["label_simulations"] == {"long": False}
     assert updated["label_boundaries"] == {"long": True}
     assert updated["policy_ids"] == {"long": "label_long"}
     manager._audit.assert_awaited_once_with("purge_device_removed", label_id="short")

@@ -9,7 +9,6 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 
 from .const import (
-    CONF_APPROVED_FINGERPRINT,
     CONF_DRY_RUN,
     CONF_LABEL_BOUNDARIES,
     CONF_LABEL_SIMULATIONS,

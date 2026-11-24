@@ -12,13 +12,11 @@ from homeassistant.helpers import label_registry as lr, selector
 from .const import (
     CONF_APPROVED_FINGERPRINT,
     CONF_AUDIT_LOG,
-    CONF_DRY_RUN,
     CONF_LABEL_BOUNDARIES,
     CONF_LABEL_SIMULATIONS,
     CONF_POLICIES,
     CONF_RUN_TIME,
     DEFAULT_AUDIT_LOG,
-    DEFAULT_DRY_RUN,
     DEFAULT_RUN_TIME,
     DOMAIN,
     MAX_KEEP_DAYS,
@@ -138,7 +136,6 @@ class LessRecordsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         data={
                             **self._settings,
                             CONF_POLICIES: self._policies,
-                            CONF_DRY_RUN: DEFAULT_DRY_RUN,
                             CONF_LABEL_SIMULATIONS: dict.fromkeys(self._policies, True),
                             CONF_LABEL_BOUNDARIES: dict.fromkeys(self._policies, False),
                             CONF_APPROVED_FINGERPRINT: "",
@@ -435,12 +432,6 @@ class LessRecordsOptionsFlow(config_entries.OptionsFlow):
             data_schema=_ACK_SCHEMA,
             errors=errors,
             description_placeholders={"change": self._pending_change},
-        )
-
-    async def async_step_simulate(self, user_input: dict | None = None):
-        """Immediately and safely disable destructive submissions."""
-        return self._save(
-            {CONF_DRY_RUN: True, CONF_APPROVED_FINGERPRINT: ""}
         )
 
     async def async_step_activate(self, user_input: dict | None = None):

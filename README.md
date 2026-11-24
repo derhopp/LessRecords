@@ -26,33 +26,33 @@ LessRecords → Devices**, each device exposes:
 | **Matching devices** (sensor) | Number of unique physical HA device IDs of directly labeled entities (attribute \`matching_entities\` also counts matched entities without a device) |
 | **Last purge run** (timestamp) | Last time a *live purge request was submitted*, not verified completion |
 | **Last run** (timestamp) | Last simulation or live attempt |
-| **Next purge run** (timestamp) | Next daily scheduled time when this label is live; unavailable while simulated |
+| **Next purge run** (timestamp) | Next daily evaluation, also visible in simulation mode |
 | **Simulation mode** (switch) | ON = audit only, OFF = request destructive Recorder purge |
 | **Preserve historical boundary state** (switch) | **Experimental, OFF by default:** create an anchor state at the retention boundary before deleting older history |
 
 All devices share one daily **Purge time**, configured through **LessRecords →
 Configure → Global purge schedule and audit logging**. Default 06:30 in
 Home Assistant's configured local timezone. No automatic catch-up run on
-startup. Existing deployments are **migrated into simulation mode** so they
-cannot silently inherit live approval after the upgrade.
+startup. Existing purge devices keep their saved simulation switches across upgrades and
+configuration edits. Only newly created purge devices start in simulation.
 
 To add a label policy, select **Configure → Add purge device**. To remove
 one, open that label's **Purge device → ⋮ (device context menu) → Delete**.
 This removes its LessRecords retention rule and its virtual device, **not
 the historical states of the labeled entities**. The last label rule and
-the LessRecords integration hub cannot be deleted this way. Removing a
-rule revokes prior live approval and switches remaining labels to simulation.
+the LessRecords integration hub cannot be deleted this way. Removing a rule invalidates prior live approval without changing the
+remaining devices' simulation settings.
 
 The integration's gear menu is intentionally minimal: **Global settings**
 (shared time and audit logging), **Add purge device**, and **Approve live
 purging**. Label assignment, retention, simulation, and boundary preservation
 are all edited directly on the device. Any change to label assignment,
-retention, or boundary preservation **revokes live purge approval and switches
-all labels back to simulation**.
+retention, or boundary preservation **invalidates live purge approval but preserves
+every existing device simulation switch**.
 
 To enable a real purge, first review the effective entity scope in **LessRecords
 → Configure → Preview and enable destructive purging**, explicitly acknowledge
-the warnings, then turn OFF *Simulation mode* on individual purge devices.
+the warnings, and configure *Simulation mode* individually on the purge devices.
 A label remains simulated unless explicitly opted into live execution.
 **If an entity has several configured labels and any of them is simulated,
 that entity is never purged by LessRecords.** Otherwise the longest retention
@@ -178,3 +178,25 @@ preserved exactly. The deterministic conversion script is
 `scripts/recolor_more_records_icon.py`. The PNG is stored at
 `custom_components/less_records/brand/icon.png`.
 
+
+## Per-device simulation and authorization
+
+There is no global simulation mode. Each purge device owns its own switch.
+**New devices default to simulation ON**. Existing switch settings remain
+unchanged on upgrades, reloads, retention changes, label reassignment, and
+device removal. A short warning is visible in the Simulation mode switch's
+detail attributes: simulation OFF requests live deletion only when the reviewed Recorder target
+scope has been explicitly approved.
+
+If a configuration or affected target scope changes, the old approval
+fingerprint is invalidated **without modifying any simulation switch**.
+Every live deletion request fails closed until the new scope is reviewed and
+approved in the integration options. Simulation continues independently
+on devices whose switches are ON.
+
+The three date/time sensor entities use Home Assistant's native
+`SensorEntityDescription` (not a generic entity description), which ensures
+their timestamp metadata is accepted by the Sensor platform. `Last run`
+is empty until the first actual attempt; `Last purge run` remains empty
+until the first accepted live submission. `Next purge run` is populated
+even for devices in simulation.

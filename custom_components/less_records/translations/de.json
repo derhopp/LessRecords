@@ -48,7 +48,7 @@
           "add_policy": "Purge-Gerät hinzufügen",
           "activate": "Echte Löschungen freigeben"
         },
-        "description": "Label, Retention, Simulation und Grenz-Datenpunkt werden direkt an den Purge-Geräten eingestellt. Purge-Geräte lassen sich im Kontextmenü des jeweiligen Geräts entfernen. Hier bleiben nur globale Einstellungen, Hinzufügen und die Sicherheitsfreigabe."
+        "description": "Label, Aufbewahrungszeit und Simulationsmodus werden an den Purge-Geräten eingestellt. Hier kannst du Geräte hinzufügen, globale Einstellungen ändern und den aktuellen Löschumfang freigeben."
       },
       "settings": {
         "title": "Tageszeit und Audit-Protokoll",
@@ -60,14 +60,14 @@
       },
       "policy_warning": {
         "title": "Änderung der Aufbewahrungsregel bestätigen",
-        "description": "**Geplante Änderung:** {change}. Beim Speichern wird LessRecords in den Simulationsmodus versetzt und die Freigabe für echte Löschungen widerrufen. Dadurch werden unbeabsichtigte Löschungen vermieden. Prüfe anschließend die simulierten Löschziele und aktiviere echte Löschungen ausdrücklich erneut.",
+        "description": "**Geplante Änderung:** {change}. Die Einstellung der vorhandenen Simulationsschalter bleibt erhalten. Änderungen am Löschumfang machen die bisherige Löschfreigabe ungültig; echte Löschungen werden bis zur erneuten Prüfung im Integrations-Zahnrad blockiert. Neue Purge-Geräte starten im Simulationsmodus.",
         "data": {
           "acknowledge": "Ich verstehe die Änderung und möchte sie übernehmen"
         }
       },
       "activate": {
         "title": "Löschumfang prüfen und echtes Löschen aktivieren",
-        "description": "**Unumkehrbarer Vorgang.** Ziele: **{target_count}**. Aufbewahrungsgruppen: **{retention_groups}**. Entitäts-IDs (gekürzt): {targets}. Erstelle ein geprüftes Backup. Die Bestätigung erlaubt echtes Purging, aber die Simulationsschalter aller Labels bleiben zunächst AN. Deaktiviere den Simulationsmodus am jeweiligen Purge-Gerät, wenn für dieses Label wirklich gelöscht werden soll. Entitäten mit mehreren Labels sind geschützt, sobald mindestens eines ihrer Labels simuliert wird. Der Schalter „Historischen Grenz-Datenpunkt erhalten“ erzeugt künstliche, rückdatierte Recorder-Einträge anhand des zuletzt davor aufgezeichneten Zustands. Dies ist experimentell und kann Daten falsch darstellen – besonders Zähler, nicht verfügbare Zustände und Statistiken. Nach Aktivierung ist eine neue Freigabe erforderlich. Das globale Recorder-Purge läuft unabhängig weiter. Eine angenommene Löschanforderung ist kein Nachweis einer abgeschlossenen Löschung.",
+        "description": "**Unumkehrbare Löschung.** Betroffene Entitäten: **{target_count}**. Retention-Gruppen: **{retention_groups}**. Entitäten (Auszug): {targets}. Erstelle ein geprüftes Backup. Die Freigabe autorisiert nur die unveränderten Löschziele. Simulationsschalter der einzelnen Purge-Geräte bleiben unverändert. An Geräten mit „Simulation aus“ werden erst nach gültiger Freigabe echte Löschanforderungen gestellt. Bei mehreren Labels schützt jeder aktive Simulationsschalter die gemeinsame Entität. Angeforderte Löschung bedeutet nicht bestätigte Ausführung.",
         "data": {
           "acknowledge": "Ich habe die Löschziele geprüft, ein Backup kontrolliert und genehmige die unumkehrbare Löschung ausdrücklich"
         }
@@ -97,7 +97,7 @@
       },
       "add_policy": {
         "title": "Label-Aufbewahrungsregel hinzufügen",
-        "description": "Ein Label hinzufügen, für das ein eigenes Purge-Gerät entsteht. Bestehende Geräte und Regeln bleiben erhalten. Das Hinzufügen widerruft bisherige Löschfreigaben und aktiviert den Simulationsmodus für alle Labels.",
+        "description": "Erstelle ein neues Purge-Gerät für das gewählte Label. Bestehende Simulationsschalter bleiben unverändert; das neue Gerät startet mit Simulation an. Die Freigabe für echte Löschungen muss wegen des geänderten Umfangs erneut bestätigt werden.",
         "data": {
           "label": "Neues Entitäten-Label",
           "keep_days": "Detaillierte Zustände aufbewahren (Tage)"
@@ -139,7 +139,12 @@
     },
     "switch": {
       "simulation": {
-        "name": "Simulationsmodus"
+        "name": "Simulationsmodus",
+        "state_attributes": {
+          "warning": {
+            "name": "Warnung"
+          }
+        }
       },
       "preserve_boundary": {
         "name": "Historischen Grenz-Datenpunkt erhalten"

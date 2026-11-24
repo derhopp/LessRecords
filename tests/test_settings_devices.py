@@ -79,12 +79,14 @@ async def test_boundary_opt_in_forces_new_approval():
 
 
 @pytest.mark.asyncio
-async def test_can_never_disable_simulation_without_approval():
-    hass, entry, registry = create_fixture()
-    entry.options = {"dry_run": True, "approved_fingerprint": ""}
-    with pytest.raises(HomeAssistantError, match="not approved"):
-        await settings.async_set_simulation(hass, entry, "heat", False)
-    hass.config_entries.async_update_entry.assert_not_called()
+async def test_mode_can_be_set_independently_of_stale_scope_approval():
+    hass, entry, _ = create_fixture()
+    entry.options = {"approved_fingerprint": "", "label_simulations": {"heat": True}}
+    await settings.async_set_simulation(hass, entry, "heat", False)
+    changed = hass.config_entries.async_update_entry.call_args.kwargs["options"]
+    assert changed["label_simulations"]["heat"] is False
+    assert changed["approved_fingerprint"] == ""
+    hass.services.async_call.assert_not_called()
 
 
 @pytest.mark.asyncio

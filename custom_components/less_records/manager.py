@@ -21,7 +21,6 @@ from .const import (
     BATCH_SIZE,
     CONF_APPROVED_FINGERPRINT,
     CONF_AUDIT_LOG,
-    CONF_DRY_RUN,
     CONF_POLICIES,
     CONF_RUN_TIME,
     DEFAULT_AUDIT_LOG,
@@ -205,16 +204,9 @@ class LessRecordsManager:
             # whenever *any* policy is about to execute in live mode.
             any_live = any(not is_simulation(settings, label) for label in policies)
             if any_live:
-                if settings.get(CONF_DRY_RUN) is not False:
-                    await self._audit(
-                        "blocked", reason="Global live approval is missing"
-                    )
-                    await self._persist()
-                    return
                 try:
                     check_approval(
-                        plan, bool(settings.get(CONF_DRY_RUN, True)),
-                        settings.get(CONF_APPROVED_FINGERPRINT, ""),
+                        plan, False, settings.get(CONF_APPROVED_FINGERPRINT, ""),
                     )
                 except PolicyError as err:
                     await self._audit("blocked", reason=str(err))
@@ -252,7 +244,7 @@ class LessRecordsManager:
                                 fresh = preflight(self.hass, current_settings)
                                 check_approval(
                                     fresh,
-                                    bool(current_settings.get(CONF_DRY_RUN, True)),
+                                    False,
                                     current_settings.get(CONF_APPROVED_FINGERPRINT, ""),
                                 )
                                 if fresh.fingerprint != plan.fingerprint:

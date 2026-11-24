@@ -50,6 +50,12 @@ def test_each_timestamp_sensor_declares_timestamp_device_class(key):
     assert sensor.unique_id.endswith(f"_{key}")
     assert sensor.entity_description.name != ""
     assert sensor.entity_description.translation_key == key
+    assert sensor.entity_description.entity_registry_enabled_default is True
+    assert sensor.entity_description.entity_registry_visible_default is True
+    assert sensor.state_class is None
+    assert sensor.native_unit_of_measurement is None
+    assert sensor.options is None
+    assert sensor.suggested_display_precision is None
 
 
 @pytest.mark.parametrize("simulation", [True, False])

@@ -5,7 +5,11 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from typing import Any
 
-from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorEntityDescription,
+)
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.util import dt as dt_util
 
@@ -48,8 +52,20 @@ class PurgePolicySensor(LabelPolicyEntity, SensorEntity):
     def __init__(self, manager, label_id: str, key: str, name: str) -> None:
         super().__init__(manager, label_id, key, name)
         self.key = key
-        if key.endswith("_run"):
-            self._attr_device_class = SensorDeviceClass.TIMESTAMP
+        # A generic EntityDescription lacks state_class, native_unit_of_measurement
+        # and other sensor-specific attributes. SensorEntity accesses them during
+        # platform setup, which previously prevented timestamp sensors from loading.
+        self.entity_description = SensorEntityDescription(
+            key=key,
+            name=name,
+            translation_key=key,
+            has_entity_name=True,
+            device_class=(
+                SensorDeviceClass.TIMESTAMP if key.endswith("_run") else None
+            ),
+            entity_registry_enabled_default=True,
+            entity_registry_visible_default=True,
+        )
         if key == "matching_devices":
             self._attr_icon = "mdi:devices"
 
