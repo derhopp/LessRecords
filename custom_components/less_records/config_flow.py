@@ -175,7 +175,7 @@ class LessRecordsOptionsFlow(config_entries.OptionsFlow):
         """Select the configuration operation."""
         return self.async_show_menu(
             step_id="init",
-            menu_options=["settings", "policies", "activate", "simulate"],
+            menu_options=["settings", "add_policy", "activate"],
         )
 
     async def async_step_settings(self, user_input: dict | None = None):

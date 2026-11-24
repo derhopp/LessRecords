@@ -25,6 +25,15 @@ establish a passing result by themselves.
   existing retention values without any destructive execution.
 - [ ] Per-label **simulation**, independent enablement, matching physical-device
   and entity counts, last run, last request, and next scheduled time verified.
+- [ ] Every purge device supports its own native **Delete** context-menu
+  action and removes only its label policy, never entity Recorder history.
+- [ ] Removing the final policy or the integration hub is rejected.
+- [ ] Removing a policy forces every remaining label back to simulation,
+  clears live approval, and preserves unrelated retention settings.
+- [ ] Last run is set even for blocked attempts; next run is shown in both
+  live and simulation modes; last purge run is only set for accepted requests.
+- [ ] Minimal global options menu: global configuration, add purge
+  device, explicit destructive authorization only.
 - [ ] Label picker and retention number update the right policy only;
   renaming a label keeps stable device ID; stale edits fail closed.
 - [ ] Integration-level daily time controls all devices after restart and

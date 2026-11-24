@@ -44,15 +44,15 @@
       "init": {
         "title": "LessRecords-Optionen",
         "menu_options": {
-          "settings": "Gemeinsame Purge-Uhrzeit und Audit-Protokoll",
-          "policies": "Bestehende Label-Aufbewahrungsregeln verwalten",
-          "activate": "Vorschau und echtes Löschen aktivieren",
-          "simulate": "Löschen deaktivieren (nur Simulation)"
-        }
+          "settings": "Globale Einstellungen",
+          "add_policy": "Purge-Gerät hinzufügen",
+          "activate": "Echte Löschungen freigeben"
+        },
+        "description": "Label, Retention, Simulation und Grenz-Datenpunkt werden direkt an den Purge-Geräten eingestellt. Purge-Geräte lassen sich im Kontextmenü des jeweiligen Geräts entfernen. Hier bleiben nur globale Einstellungen, Hinzufügen und die Sicherheitsfreigabe."
       },
       "settings": {
         "title": "Tageszeit und Audit-Protokoll",
-        "description": "Alle Purge-Geräte verwenden diese eine tägliche lokale Uhrzeit. Das Audit-Protokoll ist über die LessRecords-Entität „Audit-Protokoll“ sichtbar und unter Integrationsdiagnose herunterladbar. Ohne eigene Logdatei wird nur das Home-Assistant-Standardlog genutzt.",
+        "description": "Alle Purge-Geräte teilen eine lokale Purge-Uhrzeit (auch am LessRecords-Controller über die Zeit-Entität einstellbar). Hier kann außerdem die Audit-Protokollierung konfiguriert werden.",
         "data": {
           "run_time": "Tägliche Purge-Uhrzeit",
           "audit_log": "Separate rotierende Audit-Datei"
@@ -97,7 +97,7 @@
       },
       "add_policy": {
         "title": "Label-Aufbewahrungsregel hinzufügen",
-        "description": "Wähle ein neues Label und eine Aufbewahrungszeit (1–3650 ganze Tage). Die bestehenden Label-Regeln bleiben unverändert.",
+        "description": "Ein Label hinzufügen, für das ein eigenes Purge-Gerät entsteht. Bestehende Geräte und Regeln bleiben erhalten. Das Hinzufügen widerruft bisherige Löschfreigaben und aktiviert den Simulationsmodus für alle Labels.",
         "data": {
           "label": "Neues Entitäten-Label",
           "keep_days": "Detaillierte Zustände aufbewahren (Tage)"
@@ -150,13 +150,13 @@
         "name": "Passende Geräte"
       },
       "last_purge_run": {
-        "name": "Letzter Purge-Lauf"
+        "name": "Letzte Purge-Anforderung"
       },
       "last_run": {
-        "name": "Letzter Lauf"
+        "name": "Letzter Lauf (Simulation/Echt)"
       },
       "next_purge_run": {
-        "name": "Nächster Purge-Lauf"
+        "name": "Nächster geplanter Lauf"
       },
       "audit_log": {
         "name": "Audit-Protokoll"

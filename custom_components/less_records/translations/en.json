@@ -44,15 +44,15 @@
       "init": {
         "title": "LessRecords options",
         "menu_options": {
-          "settings": "Global purge schedule and audit logging",
-          "policies": "Manage existing label retention policies",
-          "activate": "Preview and enable destructive purging",
-          "simulate": "Disable purging (simulation only)"
-        }
+          "settings": "Global settings",
+          "add_policy": "Add purge device",
+          "activate": "Approve live purging"
+        },
+        "description": "Configure label, retention, simulation and boundary preservation directly on each purge device. Remove a purge device from its own device context menu. Only global settings, adding and destructive-operation approval remain here."
       },
       "settings": {
         "title": "Daily schedule and audit logging",
-        "description": "All purge devices share this single daily local time. The audit log is visible from the LessRecords Audit log entity and downloadable in integration Diagnostics. Disabling the dedicated file uses the standard Home Assistant log only.",
+        "description": "All purge devices share one local purge time (also editable via the LessRecords controller time entity). Configure audit logging here.",
         "data": {
           "run_time": "Daily purge time",
           "audit_log": "Dedicated rotating audit file"
@@ -97,7 +97,7 @@
       },
       "add_policy": {
         "title": "Add a label retention policy",
-        "description": "Choose a new label and a retention period (1–3650 whole days). All existing label policies are preserved.",
+        "description": "Add a label to create a new purge device. Existing devices and policies remain intact. Adding a label revokes prior destructive approvals and switches all labels to simulation.",
         "data": {
           "label": "New entity label",
           "keep_days": "Keep detailed state history (days)"
@@ -150,13 +150,13 @@
         "name": "Matching devices"
       },
       "last_purge_run": {
-        "name": "Last purge run"
+        "name": "Last purge request"
       },
       "last_run": {
-        "name": "Last run"
+        "name": "Last run (simulation/live)"
       },
       "next_purge_run": {
-        "name": "Next purge run"
+        "name": "Next scheduled run"
       },
       "audit_log": {
         "name": "Audit log"

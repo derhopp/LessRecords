@@ -59,8 +59,7 @@ class PurgePolicySensor(LabelPolicyEntity, SensorEntity):
             _, devices = targets_for_policy(self.hass, self.label_id)
             return len(devices)
         if self.key == "next_purge_run":
-            if is_simulation(get_settings(self.entry), self.label_id):
-                return None
+            # The next evaluation is meaningful even when a device simulates.
             now = dt_util.now()
             clock = datetime.strptime(
                 get_settings(self.entry).get(CONF_RUN_TIME, DEFAULT_RUN_TIME),
@@ -79,7 +78,23 @@ class PurgePolicySensor(LabelPolicyEntity, SensorEntity):
             entities, devices = targets_for_policy(self.hass, self.label_id)
             return {"matching_entities": len(entities)}
         if self.key == "last_purge_run":
-            return {"note": "Time a purge request was submitted, not proof of row deletion"}
+            return {
+                "note": "Last submitted purge request, not verified deletion",
+                "has_submitted_purge": bool(
+                    self.manager.status.get(self.label_id, {}).get("last_purge_run")
+                ),
+            }
+        if self.key == "last_run":
+            return {"note": "Latest simulation or live attempt"}
+        if self.key == "next_purge_run":
+            return {
+                "run_mode": (
+                    "simulation"
+                    if is_simulation(get_settings(self.entry), self.label_id)
+                    else "live"
+                ),
+                "note": "Next scheduled evaluation, including simulation runs",
+            }
         return None
 
 

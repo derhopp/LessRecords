@@ -36,8 +36,17 @@ Home Assistant's configured local timezone. No automatic catch-up run on
 startup. Existing deployments are **migrated into simulation mode** so they
 cannot silently inherit live approval after the upgrade.
 
-You can add or remove label policies from **Configure → Manage label retention
-policies**. At least one policy must remain. Any change to label assignment,
+To add a label policy, select **Configure → Add purge device**. To remove
+one, open that label's **Purge device → ⋮ (device context menu) → Delete**.
+This removes its LessRecords retention rule and its virtual device, **not
+the historical states of the labeled entities**. The last label rule and
+the LessRecords integration hub cannot be deleted this way. Removing a
+rule revokes prior live approval and switches remaining labels to simulation.
+
+The integration's gear menu is intentionally minimal: **Global settings**
+(shared time and audit logging), **Add purge device**, and **Approve live
+purging**. Label assignment, retention, simulation, and boundary preservation
+are all edited directly on the device. Any change to label assignment,
 retention, or boundary preservation **revokes live purge approval and switches
 all labels back to simulation**.
 
@@ -85,6 +94,19 @@ recorder:
   auto_purge: true
   purge_keep_days: 365
 \`\`\`
+
+
+
+## Run-time telemetry on each purge device
+
+**Last run** is the timestamp of the latest scheduled attempt (simulation
+or live), including an attempt blocked by invalid Recorder settings.
+**Last purge run** tracks the last accepted Recorder submission; it does not
+claim database deletion completed. It stays unavailable until the first
+submitted live request. **Next purge run** is always visible as the next
+daily *evaluation time*, including in simulation mode; an attribute specifies
+whether the planned operation is a simulation or live. Timestamp entities
+have individual translated names and stable IDs.
 
 ## Audit in the Home Assistant GUI
 

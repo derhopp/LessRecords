@@ -6,6 +6,7 @@ import logging
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr
 
 from .const import (
     CONF_APPROVED_FINGERPRINT,
@@ -17,6 +18,7 @@ from .const import (
     PLATFORMS,
 )
 from .manager import LessRecordsManager, get_settings, normalize_run_time
+from .settings import reset_approval, stable_id
 from .migration import async_migrate_legacy_entity_ids
 from .policy import PolicyError, validate_policies
 
@@ -80,4 +82,64 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         return False
     if not hass.data.get(DOMAIN):
         hass.data.pop(DOMAIN, None)
+    return True
+
+
+async def async_remove_config_entry_device(
+    hass: HomeAssistant, entry: ConfigEntry, device_entry: dr.AnyDeviceEntry
+) -> bool:
+    """Remove the label policy through the purge device's context menu.
+
+    Home Assistant deletes the device registry entry after this returns True.
+    Removing a policy never deletes any Recorder history.
+    """
+    if device_entry.config_entry_id != entry.entry_id:
+        return False
+
+    settings = get_settings(entry)
+    try:
+        policies = validate_policies(settings[CONF_POLICIES])
+    except (KeyError, PolicyError, TypeError):
+        return False
+    if len(policies) <= 1:
+        return False
+
+    matching = [
+        label_id
+        for label_id in policies
+        if (DOMAIN, f"{entry.entry_id}_{stable_id(settings, label_id)}")
+        in device_entry.identifiers
+    ]
+    if len(matching) != 1:
+        # Never remove the integration hub or another integration's device.
+        return False
+
+    label_id = matching[0]
+    remaining = {key: days for key, days in policies.items() if key != label_id}
+    new_settings = {
+        **settings,
+        CONF_POLICIES: remaining,
+        CONF_LABEL_BOUNDARIES: {
+            key: value
+            for key, value in settings.get(CONF_LABEL_BOUNDARIES, {}).items()
+            if key in remaining
+        },
+        "policy_ids": {
+            key: value
+            for key, value in settings.get("policy_ids", {}).items()
+            if key in remaining
+        },
+    }
+    reset_approval(new_settings)
+
+    manager = hass.data.get(DOMAIN, {}).get(entry.entry_id)
+    if manager is not None:
+        try:
+            await manager._audit("purge_device_removed", label_id=label_id)
+        except OSError:
+            _LOGGER.warning("Unable to audit removal of label %s", label_id)
+        manager.status.pop(label_id, None)
+        await manager._persist()
+
+    hass.config_entries.async_update_entry(entry, options=new_settings)
     return True

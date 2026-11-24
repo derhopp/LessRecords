@@ -181,6 +181,14 @@ class LessRecordsManager:
 
         async with self._lock:
             settings = get_settings(self.entry)
+            # Even a blocked run is a scheduled attempt and must appear in
+            # each purge-device's Last run sensor.
+            tentative = settings.get(CONF_POLICIES)
+            if isinstance(tentative, dict):
+                attempted_at = datetime.now(timezone.utc).isoformat()
+                for label_id in tentative:
+                    if isinstance(label_id, str):
+                        self.status.setdefault(label_id, {})["last_run"] = attempted_at
             try:
                 policies = validate_policies(settings[CONF_POLICIES])
                 plan = preflight(self.hass, settings)
@@ -190,11 +198,8 @@ class LessRecordsManager:
                     await self._audit("blocked", reason=str(err))
                 except OSError:
                     _LOGGER.exception("Audit of blocked purge failed")
+                await self._persist()
                 return
-
-            now_iso = datetime.now(timezone.utc).isoformat()
-            for label in policies:
-                self.status.setdefault(label, {})["last_run"] = now_iso
 
             # An approval must be checked for the exact current scope
             # whenever *any* policy is about to execute in live mode.
