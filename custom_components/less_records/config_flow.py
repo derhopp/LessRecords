@@ -419,11 +419,15 @@ class LessRecordsOptionsFlow(config_entries.OptionsFlow):
             else:
                 # Any actual modification revokes destructive approval.
                 # The user must review the effective entity scope again.
+                current_modes = get_settings(self._entry).get(
+                    CONF_LABEL_SIMULATIONS, {}
+                )
                 return self._save(
                     {
                         CONF_POLICIES: dict(pending),
-                        CONF_LABEL_SIMULATIONS: dict.fromkeys(pending, True),
-                        CONF_DRY_RUN: True,
+                        CONF_LABEL_SIMULATIONS: {
+                            label: current_modes.get(label, True) for label in pending
+                        },
                         CONF_APPROVED_FINGERPRINT: "",
                     }
                 )
@@ -456,7 +460,6 @@ class LessRecordsOptionsFlow(config_entries.OptionsFlow):
             else:
                 return self._save(
                     {
-                        CONF_DRY_RUN: False,
                         CONF_APPROVED_FINGERPRINT: plan.fingerprint,
                     }
                 )

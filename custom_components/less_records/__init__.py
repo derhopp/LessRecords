@@ -34,19 +34,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER.error("LessRecords setup refused invalid configuration: %s", err)
         return False
 
-    # Migration must be fail-safe. An existing global live approval is NEVER
-    # silently inherited by the new per-label switches.
-    if CONF_LABEL_SIMULATIONS not in settings:
+    # Preserve every existing device mode; new/legacy entries default to simulation.
+    modes = dict(settings.get(CONF_LABEL_SIMULATIONS, {}))
+    missing = set(settings[CONF_POLICIES]) - set(modes)
+    if missing:
+        modes.update(dict.fromkeys(missing, True))
         settings = {
             **settings,
-            CONF_LABEL_SIMULATIONS: {
-                label_id: True for label_id in settings[CONF_POLICIES]
-            },
+            CONF_LABEL_SIMULATIONS: modes,
             CONF_LABEL_BOUNDARIES: {
-                label_id: False for label_id in settings[CONF_POLICIES]
+                **dict.fromkeys(settings[CONF_POLICIES], False),
+                **settings.get(CONF_LABEL_BOUNDARIES, {}),
             },
-            CONF_DRY_RUN: True,
-            CONF_APPROVED_FINGERPRINT: "",
         }
         hass.config_entries.async_update_entry(entry, options=settings)
 
