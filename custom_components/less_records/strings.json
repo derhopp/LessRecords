@@ -161,6 +161,11 @@
       "audit_log": {
         "name": "Audit log"
       }
+    },
+    "time": {
+      "daily_purge_time": {
+        "name": "Daily purge time"
+      }
     }
   }
 }

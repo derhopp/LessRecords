@@ -15,6 +15,7 @@ from custom_components.less_records.recorder_guard import check_approval
 
 def make_entry(dry_run: bool, signature: str = "") -> SimpleNamespace:
     return SimpleNamespace(
+        entry_id="test-entry",
         data={
             "policies": {"a": 7},
             "run_time": "06:30:00",
