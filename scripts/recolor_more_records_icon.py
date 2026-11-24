@@ -53,8 +53,8 @@ def recolor(source: bytes) -> bytes:
     intervals = mint_runs(img)
     print("Mint pillar runs:", intervals)
     print("Upstream mint pixel count:", all_colors[SOURCE_COLOR])
-    if len(intervals) != 4:
-        raise ValueError("Expected four visually separate mint pillars; refusing approximation")
+    if len(intervals) != 3:
+        raise ValueError("Expected exactly three mint pillars; refusing approximation")
 
     to_edit = intervals[:3]
     before = list(img.getdata())
