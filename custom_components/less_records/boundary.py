@@ -9,7 +9,7 @@ Recorder worker, never mutating Home Assistant's live state machine.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import logging
 
 from sqlalchemy import select
