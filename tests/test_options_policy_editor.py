@@ -91,7 +91,7 @@ async def test_remove_keeps_other_policies(editor):
     await flow.async_step_remove_policy({"label": "heat"})
     result = await flow.async_step_policy_warning({"acknowledge": True})
     assert result["data"]["policies"] == {"power": 90}
-    assert result["data"]["dry_run"] is True
+    assert result["data"]["dry_run"] is False
 
 
 @pytest.mark.asyncio

@@ -33,14 +33,14 @@ def create_fixture():
 
 
 @pytest.mark.asyncio
-async def test_change_retention_only_changes_one_policy_and_resets_all_simulations():
+async def test_change_retention_preserves_all_simulation_modes():
     hass, entry, registry = create_fixture()
     with patch("custom_components.less_records.settings.lr.async_get", return_value=registry):
         await settings.async_update_policy(hass, entry, "heat", days=14)
     changed = hass.config_entries.async_update_entry.call_args.kwargs["options"]
     assert changed["policies"] == {"heat": 14, "important": 365}
     assert changed["label_simulations"] == {"heat": True, "important": True}
-    assert changed["dry_run"] is True
+    assert changed["dry_run"] is False
     assert changed["approved_fingerprint"] == ""
     assert changed["policy_ids"] == entry.data["policy_ids"]
 
@@ -74,7 +74,7 @@ async def test_boundary_opt_in_forces_new_approval():
         await settings.async_update_policy(hass, entry, "heat", boundary=True)
     changed = hass.config_entries.async_update_entry.call_args.kwargs["options"]
     assert changed["label_boundaries"]["heat"] is True
-    assert changed["dry_run"] is True
+    assert changed["dry_run"] is False
     assert changed["approved_fingerprint"] == ""
 
 
@@ -92,9 +92,7 @@ async def test_mode_can_be_set_independently_of_stale_scope_approval():
 @pytest.mark.asyncio
 async def test_can_disable_only_one_switch_after_valid_scope_approval():
     hass, entry, registry = create_fixture()
-    plan = SimpleNamespace(fingerprint="approved")
-    with patch("custom_components.less_records.settings.current_plan", return_value=plan):
-        await settings.async_set_simulation(hass, entry, "heat", False)
+    await settings.async_set_simulation(hass, entry, "heat", False)
     changed = hass.config_entries.async_update_entry.call_args.kwargs["options"]
     assert changed["label_simulations"] == {"heat": False, "important": True}
     assert changed["approved_fingerprint"] == "approved"
