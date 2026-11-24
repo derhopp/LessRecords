@@ -3,7 +3,7 @@
 **Safe, label-based retention for Home Assistant Recorder state history.**
 
 > [!CAUTION]
-> **Experimental 0.1.0b1 code — not a verified GitHub pre-release.**
+> **Experimental 0.1.0b2 code — not a verified GitHub pre-release.**
 > Live deletion is irreversible. Always back up your SQLite Recorder database
 > and test on a disposable Home Assistant instance first. The experimental
 > historical-boundary feature uses Recorder-internal SQLAlchemy/queue APIs
@@ -153,7 +153,7 @@ passing SQLite Recorder end-to-end test and backup restore test exist.**
 The source lives on [GitHub](https://github.com/derhopp/LessRecords), branch
 \`main\`. A valid HACS/Marketplace package and completed CI checks are
 required before a production recommendation. Until a release is actually
-published, do not treat version \`0.1.0b1\` in the manifest as an available
+published, do not treat version \`0.1.0b2\` in the manifest as an available
 GitHub pre-release.
 
 ## Development and testing
@@ -163,8 +163,18 @@ Home Assistant hassfest and HACS/Marketplace validation.
 The test suite includes label overlap, simulation, audit failures,
 device-policy operations and disposable SQLite boundary-state behavior.
 **Passing CI and full HA integration tests are not yet verified.**
-See [testing](docs/TEST_PLAN.md) and [release candidate notes](docs/RELEASE_0.1.0b1.md).
+See [testing](docs/TEST_PLAN.md) and [release candidate notes](docs/RELEASE_0.1.0b2.md).
 
 ## License
 
 MIT – see [LICENSE](LICENSE).
+
+## Branding
+
+The LessRecords logo is derived **directly from the original MoreRecords
+icon**. Its three left mint-green pillars are recolored red. All other
+pixels, the background, geometry and remaining MoreRecords colors are
+preserved exactly. The deterministic conversion script is
+`scripts/recolor_more_records_icon.py`. The PNG is stored at
+`custom_components/less_records/brand/icon.png`.
+

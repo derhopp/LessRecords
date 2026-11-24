@@ -48,15 +48,15 @@ jobs:
       - uses: hacs/action@main
         with:
           category: integration
-  prerelease_0_1_0b1:
-    name: Publish explicitly requested 0.1.0b1 pre-release
+  prerelease_0_1_0b2:
+    name: Publish explicitly requested 0.1.0b2 pre-release
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [tests, hassfest, hacs]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     concurrency:
-      group: less-records-prerelease-0-1-0b1
+      group: less-records-prerelease-0-1-0b2
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
@@ -68,13 +68,13 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          if gh release view 0.1.0b1 >/dev/null 2>&1; then
-            echo "Pre-release 0.1.0b1 already exists; no action."
+          if gh release view 0.1.0b2 >/dev/null 2>&1; then
+            echo "Pre-release 0.1.0b2 already exists; no action."
             exit 0
           fi
-          gh release create 0.1.0b1 \
+          gh release create 0.1.0b2 \
             --target "$GITHUB_SHA" \
-            --title "LessRecords 0.1.0b1" \
-            --notes-file docs/RELEASE_0.1.0b1.md \
+            --title "LessRecords 0.1.0b2" \
+            --notes-file docs/RELEASE_0.1.0b2.md \
             --prerelease
 
