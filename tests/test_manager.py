@@ -22,6 +22,7 @@ def make_entry(dry_run: bool, signature: str = "") -> SimpleNamespace:
             "audit_log": True,
             "dry_run": dry_run,
             "approved_fingerprint": signature,
+            "label_approvals": {"a": signature} if signature else {},
             "label_simulations": {"a": dry_run},
             "label_boundaries": {"a": False},
         },
@@ -190,3 +191,52 @@ async def test_boundary_uses_recorder_queue_not_standard_service() -> None:
     queued.assert_called_once_with(
         recorder.return_value, ["sensor.one", "sensor.two"], 7
     )
+
+
+@pytest.mark.asyncio
+async def test_unapproved_live_label_cannot_block_a_different_simulated_label() -> None:
+    manager, hass = make_manager(False)
+    manager.entry.data["policies"] = {"a": 7, "b": 90}
+    manager.entry.data["label_simulations"] = {"a": False, "b": True}
+    manager.entry.data["label_approvals"] = {}
+    manager._matching_label_ids.side_effect = (
+        lambda entity_id, policies: {"a"} if entity_id == "sensor.one" else {"b"}
+    )
+    plan = PurgePlan(
+        {7: ("sensor.one",), 90: ("sensor.two",)}, "scope-signature"
+    )
+    with patch(
+        "custom_components.less_records.manager.preflight", return_value=plan
+    ):
+        await manager.async_run()
+    actions = [c.args[0] for c in manager._audit.await_args_list]
+    assert "blocked" in actions
+    assert "simulated" in actions
+    hass.services.async_call.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_approval_is_specific_to_each_live_label() -> None:
+    manager, hass = make_manager(False)
+    manager.entry.data["policies"] = {"a": 7, "b": 90}
+    manager.entry.data["label_simulations"] = {"a": False, "b": False}
+    manager.entry.data["label_approvals"] = {"a": "scope-signature"}
+    manager._matching_label_ids.side_effect = (
+        lambda entity_id, policies: {"a"} if entity_id == "sensor.one" else {"b"}
+    )
+    plan = PurgePlan(
+        {7: ("sensor.one",), 90: ("sensor.two",)}, "scope-signature"
+    )
+    with patch(
+        "custom_components.less_records.manager.preflight", return_value=plan
+    ):
+        await manager.async_run()
+    hass.services.async_call.assert_awaited_once_with(
+        "recorder",
+        "purge_entities",
+        {"entity_id": ["sensor.one"], "keep_days": 7},
+        blocking=True,
+    )
+    actions = [c.args[0] for c in manager._audit.await_args_list]
+    assert "blocked" in actions
+    assert "request_submitted" in actions

@@ -42,88 +42,30 @@
   "options": {
     "step": {
       "init": {
-        "title": "LessRecords-Optionen",
-        "menu_options": {
-          "settings": "Globale Einstellungen",
-          "add_policy": "Purge-Gerät hinzufügen",
-          "activate": "Echte Löschungen freigeben"
-        },
-        "description": "Label, Aufbewahrungszeit und Simulationsmodus werden an den Purge-Geräten eingestellt. Hier kannst du Geräte hinzufügen, globale Einstellungen ändern und den aktuellen Löschumfang freigeben."
-      },
-      "settings": {
-        "title": "Tageszeit und Audit-Protokoll",
-        "description": "Alle Purge-Geräte teilen eine lokale Purge-Uhrzeit (auch am LessRecords-Controller über die Zeit-Entität einstellbar). Hier kann außerdem die Audit-Protokollierung konfiguriert werden.",
+        "title": "Purge-Regel hinzufügen",
+        "description": "Neues Label auswählen und eine Aufbewahrungszeit festlegen. Andere Einstellungen werden direkt an den Geräten vorgenommen.",
         "data": {
-          "run_time": "Tägliche Purge-Uhrzeit",
-          "audit_log": "Separate rotierende Audit-Datei"
+          "label": "Neues Label",
+          "keep_days": "Aufbewahrung (Tage)"
         }
       },
-      "policy_warning": {
-        "title": "Änderung der Aufbewahrungsregel bestätigen",
-        "description": "**Geplante Änderung:** {change}. Die Einstellung der vorhandenen Simulationsschalter bleibt erhalten. Änderungen am Löschumfang machen die bisherige Löschfreigabe ungültig; echte Löschungen werden bis zur erneuten Prüfung im Integrations-Zahnrad blockiert. Neue Purge-Geräte starten im Simulationsmodus.",
+      "confirm": {
+        "title": "Neue Purge-Regel bestätigen",
+        "description": "Neues Gerät für **{label}** mit **{days} Tagen** Aufbewahrung anlegen? Simulation ist standardmäßig **an**. Der geänderte Umfang erfordert eine neue Freigabe auf jedem Purge-Gerät, das echte Löschungen ausführen soll.",
         "data": {
-          "acknowledge": "Ich verstehe die Änderung und möchte sie übernehmen"
-        }
-      },
-      "activate": {
-        "title": "Löschumfang prüfen und echtes Löschen aktivieren",
-        "description": "**Unumkehrbare Löschung.** Betroffene Entitäten: **{target_count}**. Retention-Gruppen: **{retention_groups}**. Entitäten (Auszug): {targets}. Erstelle ein geprüftes Backup. Die Freigabe autorisiert nur die unveränderten Löschziele. Simulationsschalter der einzelnen Purge-Geräte bleiben unverändert. An Geräten mit „Simulation aus“ werden erst nach gültiger Freigabe echte Löschanforderungen gestellt. Bei mehreren Labels schützt jeder aktive Simulationsschalter die gemeinsame Entität. Angeforderte Löschung bedeutet nicht bestätigte Ausführung.",
-        "data": {
-          "acknowledge": "Ich habe die Löschziele geprüft, ein Backup kontrolliert und genehmige die unumkehrbare Löschung ausdrücklich"
-        }
-      },
-      "policies": {
-        "title": "Label-Aufbewahrungsregeln verwalten",
-        "description": "Aktuelle Zuordnungen Label → Aufbewahrung: {policies}. Gespeicherten Wert bearbeiten, Label hinzufügen oder einzeln entfernen, ohne die übrigen Regeln neu einzugeben.",
-        "menu_options": {
-          "edit_policy": "Bestehende Label-Aufbewahrung bearbeiten",
-          "add_policy": "Label-Aufbewahrungsregel hinzufügen",
-          "remove_policy": "Label-Aufbewahrungsregel entfernen"
-        }
-      },
-      "edit_policy": {
-        "title": "Regel zum Bearbeiten auswählen",
-        "description": "Wähle ein bereits konfiguriertes Label aus. In der Auswahlliste wird die aktuell gespeicherte Aufbewahrungszeit angezeigt.",
-        "data": {
-          "label": "Konfiguriertes Label und aktuelle Aufbewahrung"
-        }
-      },
-      "edit_retention": {
-        "title": "Aufbewahrung für {label_name} bearbeiten",
-        "description": "Bisherige Aufbewahrung: **{current_days} Tage**. Der gespeicherte Wert ist bereits eingetragen; ändere nur die Anzahl der Tage. Alle übrigen Labels bleiben unverändert.",
-        "data": {
-          "keep_days": "Detaillierte Zustände aufbewahren (Tage)"
-        }
-      },
-      "add_policy": {
-        "title": "Label-Aufbewahrungsregel hinzufügen",
-        "description": "Erstelle ein neues Purge-Gerät für das gewählte Label. Bestehende Simulationsschalter bleiben unverändert; das neue Gerät startet mit Simulation an. Die Freigabe für echte Löschungen muss wegen des geänderten Umfangs erneut bestätigt werden.",
-        "data": {
-          "label": "Neues Entitäten-Label",
-          "keep_days": "Detaillierte Zustände aufbewahren (Tage)"
-        }
-      },
-      "remove_policy": {
-        "title": "Vorhandene Label-Regel entfernen",
-        "description": "Wähle die LessRecords-Regel aus, die entfernt werden soll. Die übrigen Regeln bleiben unverändert. Mindestens ein Label muss konfiguriert bleiben.",
-        "data": {
-          "label": "Zu entfernendes konfiguriertes Label"
+          "acknowledge": "Ich bestätige die neue Regel"
         }
       }
     },
     "error": {
-      "invalid_time": "Bitte eine gültige lokale Uhrzeit eingeben.",
-      "invalid_retention": "Bitte eine ganze Zahl von 1 bis 3650 Tagen wählen.",
-      "duplicate_label": "Dieses Label ist bereits konfiguriert.",
-      "unknown_label": "Das ausgewählte Label existiert nicht.",
-      "acknowledgement_required": "Eine ausdrückliche Bestätigung ist erforderlich.",
-      "scope_changed": "Der Löschumfang hat sich während der Prüfung geändert. Öffne die Aktivierung erneut und überprüfe die Änderungen."
+      "invalid_retention": "Aufbewahrung muss eine ganze Zahl von 1–3650 Tagen sein.",
+      "duplicate_label": "Für das Label gibt es bereits ein Purge-Gerät.",
+      "unknown_label": "Das Label existiert nicht.",
+      "acknowledgement_required": "Bitte bestätigen."
     },
     "abort": {
-      "unsafe_recorder": "LessRecords kann nicht sicher aktiviert werden: {reason}",
-      "invalid_policies": "Die vorhandenen Aufbewahrungsregeln sind ungültig. Es wurden keine Änderungen gespeichert.",
-      "policies_changed": "Die gespeicherten Regeln haben sich während der Bearbeitung geändert. Öffne die Optionen erneut und prüfe die aktuellen Werte.",
-      "last_policy_required": "Mindestens ein Label muss konfiguriert bleiben. Füge ein weiteres Label hinzu, bevor du dieses entfernst."
+      "invalid_policies": "Ungültige vorhandene Regeln.",
+      "policies_changed": "Regeln geändert. Bitte erneut öffnen."
     }
   },
   "entity": {
@@ -148,11 +90,14 @@
       },
       "preserve_boundary": {
         "name": "Historischen Grenz-Datenpunkt erhalten"
+      },
+      "audit_log_enabled": {
+        "name": "Audit-Protokollierung"
       }
     },
     "sensor": {
       "matching_devices": {
-        "name": "Passende Geräte"
+        "name": "Passende Entitäten"
       },
       "last_purge_run": {
         "name": "Letzte Purge-Anforderung"
@@ -170,6 +115,11 @@
     "time": {
       "daily_purge_time": {
         "name": "Tägliche Purge-Uhrzeit"
+      }
+    },
+    "button": {
+      "approve_purge": {
+        "name": "Purge freigeben"
       }
     }
   }

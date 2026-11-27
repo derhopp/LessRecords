@@ -64,3 +64,21 @@ unverified. A GitHub release must be marked **pre-release**, not stable.
   never flip existing simulation switches; new devices default to simulation.
 - [ ] Stale approvals block live requests without overriding the device's
   switch state; simulations continue per device.
+
+## Device-first configuration and entity counting
+
+- [ ] Integration gear opens only the **add purge device** form; no duplicate
+  global time, audit, label edit, simulation, or live-approval menus.
+- [ ] Hub-device time and audit-switch entity updates persist independently.
+- [ ] Existing matching-count sensor **retains unique ID** but displays
+  **Matching entities** (Passende Entitäten). Count directly labeled,
+  enabled entities, including several entities on the same physical device
+  and helpers with no device; show physical device count as an attribute.
+- [ ] Each purge device has its own **Approve live purge** button. First
+  press shows a localized irreversible-data-loss warning with scope preview,
+  backup guidance and 120-second expiry, never calling Recorder. A second
+  press on an unchanged scope confirms **only that label**.
+- [ ] Expired/changed-scope/changed-boundary/Recorder-unavailable approvals
+  never enable live purging; simulated devices remain unaffected.
+- [ ] Adding/removing/editing policy invalidates approval fingerprints
+  without changing existing simulation switches; new devices simulate.

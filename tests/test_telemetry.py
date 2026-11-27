@@ -113,3 +113,23 @@ async def test_blocked_recorder_run_still_updates_last_run_and_persists_it():
     assert manager.status["short"]["last_run"] is not None
     manager._persist.assert_awaited_once()
     hass.services.async_call.assert_not_called()
+
+
+def test_matching_entity_count_includes_helpers_sharing_a_physical_device():
+    sensor, _ = make_sensor("matching_devices")
+    from unittest.mock import patch
+
+    with patch(
+        "custom_components.less_records.sensor.targets_for_policy",
+        return_value=(
+            {"sensor.heat", "sensor.humidity", "input_number.target"},
+            {"one-device"},
+        ),
+    ):
+        assert sensor.native_value == 3
+        assert sensor.extra_state_attributes["matching_devices"] == 1
+        assert sensor.extra_state_attributes["counted_entities"] == 3
+
+    assert sensor.entity_description.name == "Matching entities"
+    # Preserve stable unique ID to avoid duplicate entities after upgrade.
+    assert sensor.unique_id.endswith("_matching_devices")

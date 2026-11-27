@@ -1,4 +1,4 @@
-"""Regression tests for editing existing label retention policies via OptionsFlow."""
+"""The integration gear is exclusively an add-purge-device wizard."""
 
 from __future__ import annotations
 
@@ -9,22 +9,23 @@ import pytest
 
 from custom_components.less_records.config_flow import LessRecordsOptionsFlow
 
-BASE = {
-    "policies": {"heat": 7, "power": 90},
-    "run_time": "06:30:00",
-    "audit_log": True,
-    "dry_run": False,
-    "approved_fingerprint": "previous-approval",
-}
-
 
 @pytest.fixture
 def editor(hass):
-    """Provide a real OptionsFlow with isolated registry and entry settings."""
-    entry = SimpleNamespace(data=dict(BASE), options={})
+    entry = SimpleNamespace(
+        data={
+            "policies": {"heat": 7, "power": 90},
+            "run_time": "06:30:00",
+            "audit_log": True,
+            "label_simulations": {"heat": False, "power": True},
+            "label_boundaries": {"heat": False, "power": False},
+            "label_approvals": {"heat": "old-approval"},
+            "approved_fingerprint": "old-approval",
+        },
+        options={},
+    )
     flow = LessRecordsOptionsFlow(entry)
     flow.hass = hass
-
     registry = SimpleNamespace(
         labels={
             "heat": SimpleNamespace(name="Heating"),
@@ -40,99 +41,77 @@ def editor(hass):
 
 
 @pytest.mark.asyncio
-async def test_choose_existing_policy_shows_saved_days(editor):
+async def test_gear_opens_add_form_directly_without_redundant_menu(editor):
     flow, _ = editor
-    menu = await flow.async_step_policies()
-    assert menu["type"] == "menu"
-    assert "edit_policy" in menu["menu_options"]
-    selection = await flow.async_step_edit_policy({"label": "power"})
-    assert selection["type"] == "form"
-    form = await flow.async_step_edit_retention()
+    form = await flow.async_step_init()
     assert form["type"] == "form"
-    assert form["description_placeholders"]["current_days"] == "90"
-    # The existing saved value is the actual form default (not a blank input).
-    marker = next(
-        key for key in form["data_schema"].schema if key.schema == "keep_days"
-    )
-    assert marker.default() == 90
-
-
-@pytest.mark.asyncio
-async def test_edit_updates_only_selected_policy_and_revokes_approval(editor):
-    flow, entry = editor
-    await flow.async_step_policies()
-    await flow.async_step_edit_policy({"label": "power"})
-    await flow.async_step_edit_retention({"keep_days": 30})
-    assert flow._pending_policies == {"heat": 7, "power": 30}
-    assert entry.data["policies"] == {"heat": 7, "power": 90}
-    result = await flow.async_step_policy_warning({"acknowledge": True})
-    assert result["type"] == "create_entry"
-    assert result["data"]["policies"] == {"heat": 7, "power": 30}
-    assert result["data"]["run_time"] == BASE["run_time"]
-    assert result["data"]["dry_run"] is False
-    assert result["data"]["approved_fingerprint"] == ""
-
-
-@pytest.mark.asyncio
-async def test_add_keeps_all_existing_policies(editor):
-    flow, _ = editor
-    await flow.async_step_policies()
-    await flow.async_step_add_policy({"label": "added", "keep_days": 14})
-    result = await flow.async_step_policy_warning({"acknowledge": True})
-    assert result["data"]["policies"] == {
-        "heat": 7, "power": 90, "added": 14
+    assert form["step_id"] == "init"
+    assert {key.schema for key in form["data_schema"].schema} == {
+        "label", "keep_days"
     }
+    assert not hasattr(flow, "async_step_settings")
+    assert not hasattr(flow, "async_step_activate")
+    assert not hasattr(flow, "async_step_remove_policy")
 
 
 @pytest.mark.asyncio
-async def test_remove_keeps_other_policies(editor):
-    flow, _ = editor
-    await flow.async_step_policies()
-    await flow.async_step_remove_policy({"label": "heat"})
-    result = await flow.async_step_policy_warning({"acknowledge": True})
-    assert result["data"]["policies"] == {"power": 90}
-    assert result["data"]["dry_run"] is False
-
-
-@pytest.mark.asyncio
-async def test_refuses_removal_of_last_policy(editor):
+async def test_add_only_keeps_existing_modes_and_defaults_new_device_to_simulation(editor):
     flow, entry = editor
-    entry.options = {"policies": {"heat": 7}}
-    await flow.async_step_policies()
-    result = await flow.async_step_remove_policy()
-    assert result["type"] == "abort"
-    assert result["reason"] == "last_policy_required"
+    step = await flow.async_step_init({"label": "added", "keep_days": 14})
+    assert step["step_id"] == "confirm"
+    assert step["description_placeholders"] == {
+        "label": "Added", "days": "14"
+    }
+    result = await flow.async_step_confirm({"acknowledge": True})
+    assert result["type"] == "create_entry"
+    cfg = result["data"]
+    assert cfg["policies"] == {"heat": 7, "power": 90, "added": 14}
+    assert cfg["label_simulations"] == {
+        "heat": False, "power": True, "added": True
+    }
+    assert cfg["label_boundaries"]["added"] is False
+    assert cfg["label_approvals"] == {}
+    assert cfg["approved_fingerprint"] == ""
+    assert cfg["run_time"] == entry.data["run_time"]
+    assert cfg["audit_log"] is True
 
 
 @pytest.mark.asyncio
-async def test_refuses_stale_policy_edit(editor):
-    flow, entry = editor
-    await flow.async_step_policies()
-    await flow.async_step_edit_policy({"label": "heat"})
-    await flow.async_step_edit_retention({"keep_days": 10})
-    entry.options = {"policies": {"heat": 7, "power": 60}}
-    result = await flow.async_step_policy_warning({"acknowledge": True})
-    assert result["type"] == "abort"
-    assert result["reason"] == "policies_changed"
-
-
-@pytest.mark.asyncio
-async def test_refuses_unconfirmed_policy_change(editor):
+async def test_cannot_add_duplicate_label(editor):
     flow, _ = editor
-    await flow.async_step_policies()
-    await flow.async_step_edit_policy({"label": "heat"})
-    await flow.async_step_edit_retention({"keep_days": 10})
-    result = await flow.async_step_policy_warning({"acknowledge": False})
+    step = await flow.async_step_init({"label": "heat", "keep_days": 20})
+    assert step["type"] == "form"
+    assert step["errors"]["label"] == "duplicate_label"
+
+
+@pytest.mark.asyncio
+async def test_cannot_add_unknown_label(editor):
+    flow, _ = editor
+    step = await flow.async_step_init({"label": "missing", "keep_days": 20})
+    assert step["errors"]["label"] == "unknown_label"
+
+
+@pytest.mark.asyncio
+async def test_invalid_retention_is_rejected(editor):
+    flow, _ = editor
+    step = await flow.async_step_init({"label": "added", "keep_days": 1.5})
+    assert step["errors"]["keep_days"] == "invalid_retention"
+
+
+@pytest.mark.asyncio
+async def test_confirmation_must_be_explicit(editor):
+    flow, _ = editor
+    await flow.async_step_init({"label": "added", "keep_days": 20})
+    result = await flow.async_step_confirm({"acknowledge": False})
     assert result["type"] == "form"
     assert result["errors"]["base"] == "acknowledgement_required"
 
 
 @pytest.mark.asyncio
-async def test_unchanged_retention_preserves_live_approval(editor):
-    flow, _ = editor
-    await flow.async_step_policies()
-    await flow.async_step_edit_policy({"label": "heat"})
-    result = await flow.async_step_edit_retention({"keep_days": 7})
-    assert result["type"] == "create_entry"
-    assert result["data"]["dry_run"] is False
-    assert result["data"]["approved_fingerprint"] == "previous-approval"
+async def test_changed_existing_policy_blocks_stale_add(editor):
+    flow, entry = editor
+    await flow.async_step_init({"label": "added", "keep_days": 14})
+    entry.options = {"policies": {"heat": 14, "power": 90}}
+    result = await flow.async_step_confirm({"acknowledge": True})
+    assert result["type"] == "abort"
+    assert result["reason"] == "policies_changed"

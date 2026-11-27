@@ -26,7 +26,7 @@ from .settings import is_simulation
 SCAN_INTERVAL = timedelta(minutes=1)
 
 SENSORS = {
-    "matching_devices": "Matching devices",
+    "matching_devices": "Matching entities",
     "last_purge_run": "Last purge run",
     "last_run": "Last run",
     "next_purge_run": "Next purge run",
@@ -72,8 +72,8 @@ class PurgePolicySensor(LabelPolicyEntity, SensorEntity):
     @property
     def native_value(self) -> Any:
         if self.key == "matching_devices":
-            _, devices = targets_for_policy(self.hass, self.label_id)
-            return len(devices)
+            entities, _ = targets_for_policy(self.hass, self.label_id)
+            return len(entities)
         if self.key == "next_purge_run":
             # The next evaluation is meaningful even when a device simulates.
             now = dt_util.now()
@@ -92,7 +92,11 @@ class PurgePolicySensor(LabelPolicyEntity, SensorEntity):
     def extra_state_attributes(self) -> dict[str, Any] | None:
         if self.key == "matching_devices":
             entities, devices = targets_for_policy(self.hass, self.label_id)
-            return {"matching_entities": len(entities)}
+            return {
+                "matching_devices": len(devices),
+                "counted_entities": len(entities),
+                "note": "Enabled entities directly carrying this label",
+            }
         if self.key == "last_purge_run":
             return {
                 "note": "Last submitted purge request, not verified deletion",

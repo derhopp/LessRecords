@@ -20,12 +20,16 @@ AUDIT_FILENAME = "less_records_audit.log"
 AUDIT_MAX_BYTES = 5 * 1024 * 1024
 AUDIT_BACKUP_COUNT = 4
 
-# Label-level controls; missing mappings inherit the legacy global dry-run flag.
+# Label-level controls; missing mappings always default to simulation.
 CONF_LABEL_SIMULATIONS = "label_simulations"
 CONF_LABEL_BOUNDARIES = "label_boundaries"
+CONF_LABEL_APPROVALS = "label_approvals"
 CONF_POLICY_IDS = "policy_ids"
 CONF_ACTIVE_LABELS = "active_labels"
-PLATFORMS = (Platform.SENSOR, Platform.NUMBER, Platform.SELECT, Platform.SWITCH, Platform.TIME)
+PLATFORMS = (
+    Platform.SENSOR, Platform.NUMBER, Platform.SELECT, Platform.SWITCH,
+    Platform.TIME, Platform.BUTTON,
+)
 STATE_STORE_VERSION = 1
 MAX_AUDIT_PREVIEW = 20
 MAX_ANCHORS_PER_RUN = 100

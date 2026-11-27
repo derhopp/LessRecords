@@ -42,88 +42,30 @@
   "options": {
     "step": {
       "init": {
-        "title": "LessRecords options",
-        "menu_options": {
-          "settings": "Global settings",
-          "add_policy": "Add purge device",
-          "activate": "Approve live purging"
-        },
-        "description": "Edit label, retention and simulation on each purge device. Here you can add devices, change global settings and approve the current purge scope."
-      },
-      "settings": {
-        "title": "Daily schedule and audit logging",
-        "description": "All purge devices share one local purge time (also editable via the LessRecords controller time entity). Configure audit logging here.",
+        "title": "Add purge rule",
+        "description": "Choose a new label and its retention. All existing settings are managed on the devices.",
         "data": {
-          "run_time": "Daily purge time",
-          "audit_log": "Dedicated rotating audit file"
+          "label": "New label",
+          "keep_days": "Retention (days)"
         }
       },
-      "policy_warning": {
-        "title": "Confirm change to retention policy",
-        "description": "**Planned change:** {change}. Existing simulation switches retain their settings. A changed purge scope invalidates destructive approval; live requests are blocked until you review and approve the new scope in integration options. New purge devices start in simulation.",
+      "confirm": {
+        "title": "Confirm new purge rule",
+        "description": "Create the new purge device for **{label}**, retaining **{days} days**? Simulation defaults **ON**. Because the scope changes, every live-mode purge device needs fresh approval using its own approval button.",
         "data": {
-          "acknowledge": "I understand the change and want to apply it"
-        }
-      },
-      "activate": {
-        "title": "Preview scope and activate irreversible purge requests",
-        "description": "**Irreversible deletion.** Affected entities: **{target_count}**. Retention groups: **{retention_groups}**. Entity preview: {targets}. Verify a restorable backup. Approval authorizes only the unchanged target scope. Each purge device keeps its simulation switch unchanged. Devices with simulation OFF submit live purge requests only after valid approval. If an entity matches several labels, any simulated label protects it. A submitted request is not proof of deletion.",
-        "data": {
-          "acknowledge": "I have reviewed this scope, verified my backup, and explicitly authorize irreversible deletion"
-        }
-      },
-      "policies": {
-        "title": "Manage label retention policies",
-        "description": "Current label → retention rules: {policies}. Edit a saved value, add a label, or remove one without replacing the other rules.",
-        "menu_options": {
-          "edit_policy": "Edit existing label retention",
-          "add_policy": "Add a label retention policy",
-          "remove_policy": "Remove a label retention policy"
-        }
-      },
-      "edit_policy": {
-        "title": "Choose the policy to edit",
-        "description": "Select an existing label. The dropdown includes its currently saved retention period.",
-        "data": {
-          "label": "Configured label and current retention"
-        }
-      },
-      "edit_retention": {
-        "title": "Edit retention for {label_name}",
-        "description": "Current retention: **{current_days} days**. The stored value is prefilled; change only the number of days. Other labels will not be modified.",
-        "data": {
-          "keep_days": "Keep detailed state history (days)"
-        }
-      },
-      "add_policy": {
-        "title": "Add a label retention policy",
-        "description": "Create a new purge device for the selected label. Existing simulation switches stay unchanged; the new device starts with simulation ON. Changes to the target scope require renewed destructive approval.",
-        "data": {
-          "label": "New entity label",
-          "keep_days": "Keep detailed state history (days)"
-        }
-      },
-      "remove_policy": {
-        "title": "Remove an existing label policy",
-        "description": "Select the label whose LessRecords policy should be removed. Other policies remain unchanged. At least one label must remain configured.",
-        "data": {
-          "label": "Configured label to remove"
+          "acknowledge": "I confirm the new rule"
         }
       }
     },
     "error": {
-      "invalid_time": "Enter a valid local time.",
-      "invalid_retention": "Retention must be between 1 and 3650 whole days.",
-      "duplicate_label": "This label is already configured.",
-      "unknown_label": "The selected label does not exist.",
-      "acknowledgement_required": "Explicit acknowledgement is required.",
-      "scope_changed": "The entity scope changed during review. Reopen the activation screen to review it again."
+      "invalid_retention": "Retention must be a whole number from 1 to 3650 days.",
+      "duplicate_label": "This label already has a purge device.",
+      "unknown_label": "The label does not exist.",
+      "acknowledgement_required": "Please confirm."
     },
     "abort": {
-      "unsafe_recorder": "Cannot safely activate LessRecords: {reason}",
-      "invalid_policies": "The current retention policies are invalid. No changes were saved.",
-      "policies_changed": "The saved policies changed during this operation. Reopen the options and review the latest values.",
-      "last_policy_required": "At least one label retention policy must remain configured. Add another label before removing this one."
+      "invalid_policies": "Existing policies are invalid.",
+      "policies_changed": "Policies changed; reopen the form."
     }
   },
   "entity": {
@@ -148,11 +90,14 @@
       },
       "preserve_boundary": {
         "name": "Preserve historical boundary state"
+      },
+      "audit_log_enabled": {
+        "name": "Audit logging"
       }
     },
     "sensor": {
       "matching_devices": {
-        "name": "Matching devices"
+        "name": "Matching entities"
       },
       "last_purge_run": {
         "name": "Last purge request"
@@ -170,6 +115,11 @@
     "time": {
       "daily_purge_time": {
         "name": "Daily purge time"
+      }
+    },
+    "button": {
+      "approve_purge": {
+        "name": "Approve live purge"
       }
     }
   }

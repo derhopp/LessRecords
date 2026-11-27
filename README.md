@@ -27,8 +27,10 @@ LessRecords → Devices**, each device exposes:
 | **Last purge run** (timestamp) | Last time a *live purge request was submitted*, not verified completion |
 | **Last run** (timestamp) | Last simulation or live attempt |
 | **Next purge run** (timestamp) | Next daily evaluation, also visible in simulation mode |
-| **Simulation mode** (switch) | ON = audit only, OFF = request destructive Recorder purge |
+| **Simulation mode** (switch) | ON = audit only, OFF = eligible for live purge once its device has explicit approval |
 | **Preserve historical boundary state** (switch) | **Experimental, OFF by default:** create an anchor state at the retention boundary before deleting older history |
+| **Approve live purge** (button) | Two-step, expiring warning and confirmation scoped to this label |
+
 
 All devices share one daily **Purge time**, configured through **LessRecords →
 Configure → Global purge schedule and audit logging**. Default 06:30 in
@@ -43,27 +45,33 @@ the historical states of the labeled entities**. The last label rule and
 the LessRecords integration hub cannot be deleted this way. Removing a rule invalidates prior live approval without changing the
 remaining devices' simulation settings.
 
-The integration's gear menu is intentionally minimal: **Global settings**
-(shared time and audit logging), **Add purge device**, and **Approve live
-purging**. Label assignment, retention, simulation, and boundary preservation
-are all edited directly on the device. Any change to label assignment,
-retention, or boundary preservation **invalidates live purge approval but preserves
-every existing device simulation switch**.
+The integration gear opens **only Add purge device**. The integration hub
+provides the global **Daily purge time** time control and **Audit logging**
+switch. Existing devices contain all label-specific settings, including
+retention, target label, simulation, boundary preservation, and an
+**Approve live purge** button.
 
-To enable a real purge, first review the effective entity scope in **LessRecords
-→ Configure → Preview and enable destructive purging**, explicitly acknowledge
-the warnings, and configure *Simulation mode* individually on the purge devices.
-A label remains simulated unless explicitly opted into live execution.
-**If an entity has several configured labels and any of them is simulated,
-that entity is never purged by LessRecords.** Otherwise the longest retention
-wins. A changed entity scope blocks live operations until reapproved.
+To enable live purging for a specific label, switch its **Simulation mode**
+OFF, then press **Approve live purge** on that same purge device. Home Assistant
+shows a persistent notification with the exact retention, number of targeted
+entities, preview of entity IDs, the optional boundary setting and a
+prominent warning to verify your backup. Read it and press the approval
+button **again within two minutes** to confirm. If the scope or boundary
+setting changes, the confirmation is invalidated.
+
+Each approval applies to **one label only**. Changes to labels, retention,
+boundary preservation or the configured scope invalidate live approvals,
+but **never change simulation switch settings**. A device with simulation
+OFF but missing or stale approval cannot submit a destructive request.
+**If several labels match an entity, any simulated label protects it**; when
+all are live and approved, the longest retention wins.
 
 
 ## Descriptive, stable entity names and IDs
 
 Each policy device retains the Home Assistant label name, but its controls and
 sensors use translated, descriptive function names. For example, the label
-`sparse` has **Sparse Retention days**, **Sparse Matching devices**,
+`sparse` has **Sparse Retention days**, **Sparse Matching entities**,
 **Sparse Simulation mode** and **Sparse Last run**. New entities suggest
 stable IDs such as `number.less_records_sparse_retention_days` and
 `sensor.less_records_sparse_last_run`, instead of multiple identical
@@ -184,14 +192,14 @@ preserved exactly. The deterministic conversion script is
 There is no global simulation mode. Each purge device owns its own switch.
 **New devices default to simulation ON**. Existing switch settings remain
 unchanged on upgrades, reloads, retention changes, label reassignment, and
-device removal. A short warning is visible in the Simulation mode switch's
-detail attributes: simulation OFF requests live deletion only when the reviewed Recorder target
-scope has been explicitly approved.
+device removal. A short warning is visible in the Simulation mode switch's details. The
+separate approval button on each device requires two deliberate presses and
+shows a persistent notification before enabling irreversible deletion.
 
 If a configuration or affected target scope changes, the old approval
 fingerprint is invalidated **without modifying any simulation switch**.
 Every live deletion request fails closed until the new scope is reviewed and
-approved in the integration options. Simulation continues independently
+approved again from the affected purge device. Simulation continues independently
 on devices whose switches are ON.
 
 The three date/time sensor entities use Home Assistant's native

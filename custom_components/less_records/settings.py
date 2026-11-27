@@ -11,6 +11,7 @@ from homeassistant.helpers import label_registry as lr
 from .const import (
     CONF_APPROVED_FINGERPRINT,
     CONF_LABEL_BOUNDARIES,
+    CONF_LABEL_APPROVALS,
     CONF_LABEL_SIMULATIONS,
     CONF_POLICIES,
     CONF_POLICY_IDS,
@@ -43,6 +44,7 @@ def reset_approval(settings: dict[str, Any]) -> dict[str, Any]:
         label: bool(previous.get(label, True)) for label in policies
     }
     settings[CONF_APPROVED_FINGERPRINT] = ""
+    settings[CONF_LABEL_APPROVALS] = {}
     return settings
 
 async def async_update_policy(

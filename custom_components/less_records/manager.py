@@ -19,7 +19,7 @@ from .boundary import queue_boundary_purge
 from .const import (
     AUDIT_FILENAME,
     BATCH_SIZE,
-    CONF_APPROVED_FINGERPRINT,
+    CONF_LABEL_APPROVALS,
     CONF_AUDIT_LOG,
     CONF_POLICIES,
     CONF_RUN_TIME,
@@ -89,6 +89,8 @@ class LessRecordsManager:
         self._unsubscribe: Any = None
         self._lock = asyncio.Lock()
         self._last_run_date: date | None = None
+        self.pending_approvals: dict[str, tuple[str, float]] = {}
+        self.approval_lock = asyncio.Lock()
         self._store: Store = Store(hass, STATE_STORE_VERSION, f"{DOMAIN}.{entry.entry_id}")
         self.status: dict[str, dict[str, str | None]] = {}
         self.last_audit: dict[str, Any] = {}
@@ -200,19 +202,6 @@ class LessRecordsManager:
                 await self._persist()
                 return
 
-            # An approval must be checked for the exact current scope
-            # whenever *any* policy is about to execute in live mode.
-            any_live = any(not is_simulation(settings, label) for label in policies)
-            if any_live:
-                try:
-                    check_approval(
-                        plan, False, settings.get(CONF_APPROVED_FINGERPRINT, ""),
-                    )
-                except PolicyError as err:
-                    await self._audit("blocked", reason=str(err))
-                    await self._persist()
-                    return
-
             for days, entities in plan.by_retention.items():
                 # Batch by *actual* policy behavior, including boundary setting.
                 groups: dict[tuple[bool, bool], list[tuple[str, list[str]]]] = {}
@@ -239,14 +228,18 @@ class LessRecordsManager:
                         )
 
                         if not simulation:
+                            # Approval is per purge device. Never authorize a
+                            # different label just because one was approved.
+                            current_settings = get_settings(self.entry)
                             try:
-                                current_settings = get_settings(self.entry)
                                 fresh = preflight(self.hass, current_settings)
-                                check_approval(
-                                    fresh,
-                                    False,
-                                    current_settings.get(CONF_APPROVED_FINGERPRINT, ""),
-                                )
+                                approvals = current_settings.get(CONF_LABEL_APPROVALS, {})
+                                if not isinstance(approvals, dict):
+                                    raise PolicyError("Invalid per-label approval state")
+                                for label in affected_labels:
+                                    check_approval(
+                                        fresh, False, approvals.get(label, "")
+                                    )
                                 if fresh.fingerprint != plan.fingerprint:
                                     raise PolicyError("Scope changed during the run")
                                 if any(
@@ -263,10 +256,17 @@ class LessRecordsManager:
                                     ):
                                         raise PolicyError("Target labels changed during the run")
                             except (KeyError, PolicyError, TypeError) as err:
-                                _LOGGER.error("LessRecords aborted: %s", err)
-                                await self._audit("blocked", reason=str(err))
-                                await self._persist()
-                                return
+                                _LOGGER.error("LessRecords blocked device batch: %s", err)
+                                await self._audit(
+                                    "blocked",
+                                    reason=str(err),
+                                    labels=affected_labels,
+                                    entities=batch,
+                                    keep_days=days,
+                                )
+                                # Other labels can still simulate or purge
+                                # within their own approved scope.
+                                continue
 
                         context = {
                             "entities": batch,

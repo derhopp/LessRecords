@@ -43,8 +43,12 @@ A modified policy/target scope invalidates the prior destructive approval
 fingerprint, but leaves every existing simulation switch intact. Live-mode
 devices remain visibly live and execution is blocked until explicit approval.
 
-Explicit manual approval is required on the integration before the user can
-turn off simulation **on any individual device**. Any entity with a
+Manual approval is required **on each purge device** before that device
+may submit live Recorder purge requests. A dedicated button requires two
+presses within two minutes: first a persistent warning containing the
+label, retention, boundary flag and entity preview; second an approval of
+the unchanged plan fingerprint. Neither pressing the button nor switching
+simulation OFF alone calls Recorder. Any entity with a
 simulated matching label is fully protected, including from another matching
 label that is live. If all matching labels are live, only the longest
 retention controls deletion.
