@@ -64,6 +64,19 @@ class ApprovePurgeButton(LabelPolicyEntity, ButtonEntity):
 
     async def async_press(self) -> None:
         """Two deliberate presses, checked again against the current scope."""
+        # The device button is a service-call surface. Never let a regular
+        # Home Assistant user or an automation authorize data deletion.
+        context = self._context
+        user_id = context.user_id if context is not None else None
+        if not user_id:
+            raise HomeAssistantError(
+                "Purge approval requires an authenticated Home Assistant administrator"
+            )
+        user = await self.hass.auth.async_get_user(user_id)
+        if user is None or not user.is_admin:
+            raise HomeAssistantError(
+                "Only a Home Assistant administrator can approve live purging"
+            )
         manager = self.manager
         async with manager.approval_lock:
             settings = get_settings(self.entry)

@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from custom_components.less_records.manager import LessRecordsManager
-from custom_components.less_records.sensor import PurgePolicySensor
+from custom_components.less_records.sensor import PurgePolicySensor, SENSORS
 
 
 def make_sensor(key: str, *, simulation: bool = True):
@@ -37,7 +37,7 @@ def make_sensor(key: str, *, simulation: bool = True):
             labels={"short": SimpleNamespace(name="Short")}
         ),
     ):
-        item = PurgePolicySensor(manager, "short", key, key.replace("_", " ").title())
+        item = PurgePolicySensor(manager, "short", key, SENSORS[key])
     return item, manager
 
 

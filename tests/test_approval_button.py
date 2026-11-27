@@ -41,6 +41,8 @@ def setup_button():
     ):
         button = ApprovePurgeButton(manager, "heat")
     button.hass = hass
+    button._context = SimpleNamespace(user_id="admin-user")
+    hass.auth.async_get_user = AsyncMock(return_value=SimpleNamespace(is_admin=True))
     return button, manager, hass
 
 
@@ -136,3 +138,24 @@ async def test_recorder_not_ready_blocks_approval_and_never_queues_purge():
         await button.async_press()
     hass.config_entries.async_update_entry.assert_not_called()
     hass.services.async_call.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_non_admin_cannot_begin_approval_or_request_purge():
+    button, manager, hass = setup_button()
+    hass.auth.async_get_user.return_value = SimpleNamespace(is_admin=False)
+    with pytest.raises(HomeAssistantError, match="administrator"):
+        await button.async_press()
+    assert manager.pending_approvals == {}
+    hass.config_entries.async_update_entry.assert_not_called()
+    hass.services.async_call.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_automation_without_authenticated_user_cannot_approve():
+    button, manager, hass = setup_button()
+    button._context = SimpleNamespace(user_id=None)
+    with pytest.raises(HomeAssistantError, match="authenticated"):
+        await button.async_press()
+    assert manager.pending_approvals == {}
+    hass.auth.async_get_user.assert_not_awaited()

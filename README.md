@@ -56,7 +56,9 @@ OFF, then press **Approve live purge** on that same purge device. Home Assistant
 shows a persistent notification with the exact retention, number of targeted
 entities, preview of entity IDs, the optional boundary setting and a
 prominent warning to verify your backup. Read it and press the approval
-button **again within two minutes** to confirm. If the scope or boundary
+button **again within two minutes** to confirm. Only an authenticated Home
+Assistant administrator can use this approval button; automation contexts
+and ordinary users cannot authorize deletions. If the scope or boundary
 setting changes, the confirmation is invalidated.
 
 Each approval applies to **one label only**. Changes to labels, retention,

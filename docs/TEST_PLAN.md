@@ -77,7 +77,8 @@ unverified. A GitHub release must be marked **pre-release**, not stable.
 - [ ] Each purge device has its own **Approve live purge** button. First
   press shows a localized irreversible-data-loss warning with scope preview,
   backup guidance and 120-second expiry, never calling Recorder. A second
-  press on an unchanged scope confirms **only that label**.
+  press on an unchanged scope confirms **only that label**. Only admin-user
+  contexts may approve; ordinary-user and automation contexts are rejected.
 - [ ] Expired/changed-scope/changed-boundary/Recorder-unavailable approvals
   never enable live purging; simulated devices remain unaffected.
 - [ ] Adding/removing/editing policy invalidates approval fingerprints
