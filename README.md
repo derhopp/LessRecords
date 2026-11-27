@@ -3,7 +3,7 @@
 **Safe, label-based retention for Home Assistant Recorder state history.**
 
 > [!CAUTION]
-> **Experimental pre-release 0.1.0b3 — not production certified.**
+> **Experimental pre-release 0.1.0b4 — not production certified.**
 > Live deletion is irreversible. Always back up your SQLite Recorder database
 > and test on a disposable Home Assistant instance first. The experimental
 > historical-boundary feature uses Recorder-internal SQLAlchemy/queue APIs
@@ -23,7 +23,7 @@ LessRecords → Devices**, each device exposes:
 | --- | --- |
 | **Target label** (select) | Change the HA label via picker without recreating all policies |
 | **Retention days** (number) | Edit its current retention (1–3650 whole days) |
-| **Matching devices** (sensor) | Number of unique physical HA device IDs of directly labeled entities (attribute \`matching_entities\` also counts matched entities without a device) |
+| **Matching entities** (sensor) | Number of directly labeled enabled entities, including helpers without physical devices; the count of distinct physical devices is an attribute |
 | **Last purge run** (timestamp) | Last time a *live purge request was submitted*, not verified completion |
 | **Last run** (timestamp) | Last simulation or live attempt |
 | **Next purge run** (timestamp) | Next daily evaluation, also visible in simulation mode |
@@ -32,9 +32,10 @@ LessRecords → Devices**, each device exposes:
 | **Approve live purge** (button) | Two-step, expiring warning and confirmation scoped to this label |
 
 
-All devices share one daily **Purge time**, configured through **LessRecords →
-Configure → Global purge schedule and audit logging**. Default 06:30 in
-Home Assistant's configured local timezone. No automatic catch-up run on
+All devices share one daily **Purge time**, edited on the LessRecords
+integration hub via its **Daily purge time** time entity. Audit logging is
+controlled by an **Audit logging** switch on the same hub device. Default
+purge time is 06:30 in Home Assistant's configured local timezone. No automatic catch-up run on
 startup. Existing purge devices keep their saved simulation switches across upgrades and
 configuration edits. Only newly created purge devices start in simulation.
 
@@ -163,7 +164,7 @@ passing SQLite Recorder end-to-end test and backup restore test exist.**
 The source lives on [GitHub](https://github.com/derhopp/LessRecords), branch
 \`main\`. A valid HACS/Marketplace package and completed CI checks are
 required before a production recommendation. Until a release is actually
-published, do not treat version \`0.1.0b3\` in the manifest as an available
+published, do not treat version \`0.1.0b4\` in the manifest as an available
 GitHub pre-release.
 
 ## Development and testing
@@ -173,7 +174,7 @@ Home Assistant hassfest and HACS/Marketplace validation.
 The test suite includes label overlap, simulation, audit failures,
 device-policy operations and disposable SQLite boundary-state behavior.
 **Passing CI and full HA integration tests are not yet verified.**
-See [testing](docs/TEST_PLAN.md) and [release candidate notes](docs/RELEASE_0.1.0b3.md).
+See [testing](docs/TEST_PLAN.md) and [release candidate notes](docs/RELEASE_0.1.0b4.md).
 
 ## License
 
